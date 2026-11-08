@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f7f5">
+  <meta name="description" content="{{STUDENT_NAME}}的 QR Code 課程作業網站。">
+  <link rel="canonical" href="https://lucas950219.github.io/data_structure/qrcode.html">
+  <title>QR Code 作業網站｜{{STUDENT_NAME}}</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #182c2a;
+      --muted: #60716e;
+      --green: #176b55;
+      --green-dark: #0c493a;
+      --paper: #fffefa;
+      --line: #dbe5df;
+      --soft: #edf4ef;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: clamp(22px, 6vw, 72px) 18px;
+      color: var(--ink);
+      background: radial-gradient(circle at 82% 12%, #dbece2 0, transparent 29rem), #f4f7f5;
+      font-family: "Segoe UI", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+      line-height: 1.7;
+    }
+    main { width: min(100%, 760px); margin: auto; }
+    .topline { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: clamp(44px, 9vw, 90px); }
+    .brand { display: flex; align-items: center; gap: 10px; color: var(--green-dark); font-size: .88rem; font-weight: 800; letter-spacing: .04em; }
+    .brand-mark { display: grid; width: 38px; aspect-ratio: 1; place-items: center; border-radius: 12px; color: white; background: var(--green-dark); }
+    .topline-label { color: var(--muted); font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .eyebrow { color: var(--green); font-size: .78rem; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+    h1 { max-width: 680px; margin: 12px 0 16px; font-size: clamp(2.45rem, 8vw, 5.1rem); line-height: 1.08; letter-spacing: -.055em; }
+    .lead { max-width: 580px; margin: 0; color: var(--muted); font-size: clamp(1rem, 2.6vw, 1.14rem); }
+    .card { margin-top: 30px; padding: clamp(20px, 5vw, 34px); border: 1px solid var(--line); border-radius: 24px; background: var(--paper); box-shadow: 0 18px 55px #1d46300b; }
+    .card-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 22px; }
+    h2 { margin: 0; font-size: 1.18rem; }
+    .card-note { margin: 4px 0 0; color: var(--muted); font-size: .88rem; }
+    .badge { flex: 0 0 auto; padding: 6px 11px; border-radius: 999px; color: var(--green-dark); background: var(--soft); font-size: .76rem; font-weight: 800; }
+    .identity { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .identity-item { min-width: 0; padding: 17px 19px; border-radius: 16px; background: var(--soft); }
+    .label { display: block; margin-bottom: 4px; color: var(--muted); font-size: .78rem; font-weight: 700; }
+    .value { font-size: 1.13rem; font-weight: 800; overflow-wrap: anywhere; }
+    .visit-time { margin: 18px 0 0; color: var(--muted); font-size: .84rem; }
+    .url-block { margin-top: 22px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+    .url-block a { color: var(--green-dark); font-size: .92rem; font-weight: 700; overflow-wrap: anywhere; }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 20px; }
+    button, .button-link { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 10px 18px; border: 0; border-radius: 999px; color: white; background: var(--green-dark); font: inherit; font-size: .9rem; font-weight: 800; text-decoration: none; cursor: pointer; }
+    button:hover, .button-link:hover { background: var(--green); }
+    button:focus-visible, .button-link:focus-visible { outline: 3px solid #176b5555; outline-offset: 3px; }
+    .copy-status { min-height: 1.5em; margin: 0; color: var(--green-dark); font-size: .86rem; }
+    footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 26px; color: var(--muted); font-size: .78rem; }
+    @media (max-width: 520px) {
+      .topline { margin-bottom: 54px; }
+      .topline-label { font-size: .68rem; }
+      .identity { grid-template-columns: 1fr; }
+      .card-heading { flex-direction: column; }
+      footer { flex-direction: column; gap: 4px; }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      main { animation: enter .55s ease-out both; }
+      @keyframes enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="topline">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">QR</span><span>QR Code 作業</span></div>
+      <span class="topline-label">GitHub Pages</span>
+    </header>
+
+    <section aria-labelledby="page-title">
+      <div class="eyebrow">Scan successful</div>
+      <h1 id="page-title">你好，歡迎來到我的 QR Code 作業網站。</h1>
+      <p class="lead">掃描 QR Code 即可透過網路瀏覽這個作業頁面，不需要連接到架設網站的電腦或同一個 Wi-Fi。</p>
+    </section>
+
+    <section class="card" aria-labelledby="student-heading">
+      <div class="card-heading">
+        <div>
+          <h2 id="student-heading">學生資料</h2>
+          <p class="card-note">QR Code 課程作業</p>
+        </div>
+        <span class="badge">網站已開啟</span>
+      </div>
+      <div class="identity">
+        <div class="identity-item"><span class="label">學號</span><span class="value">{{STUDENT_ID}}</span></div>
+        <div class="identity-item"><span class="label">姓名</span><span class="value">{{STUDENT_NAME}}</span></div>
+      </div>
+      <p class="visit-time">本次瀏覽時間：<time id="opened-at">載入中</time></p>
+      <div class="url-block">
+        <span class="label">正式網站網址</span>
+        <a id="public-url" href="https://lucas950219.github.io/data_structure/qrcode.html">https://lucas950219.github.io/data_structure/qrcode.html</a>
+      </div>
+      <div class="actions">
+        <a class="button-link" href="https://lucas950219.github.io/data_structure/qrcode.html">開啟 GitHub Pages 網站</a>
+        <button id="copy-link" type="button">複製正式網址</button>
+        <p class="copy-status" id="copy-status" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <footer>
+      <span>以 HTML、CSS 與 JavaScript 製作</span>
+      <span>由 GitHub Pages 提供網頁服務</span>
+    </footer>
+  </main>
+  <script>
+    const openedAt = new Date();
+    document.getElementById("opened-at").textContent = openedAt.toLocaleString("zh-TW", {
+      dateStyle: "long",
+      timeStyle: "medium"
+    });
+
+    const copyButton = document.getElementById("copy-link");
+    const copyStatus = document.getElementById("copy-status");
+    const publicUrl = document.getElementById("public-url").href;
+    copyButton.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(publicUrl);
+        copyStatus.textContent = "正式網址已複製。";
+      } catch {
+        copyStatus.textContent = "請從上方複製正式網站網址。";
+      }
+    });
+  </script>
+</body>
+</html>
