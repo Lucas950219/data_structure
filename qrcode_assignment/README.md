@@ -1,12 +1,12 @@
 # QR Code 網址導引作業
 
-這個專案使用 Python 產生網址 QR Code、以 OpenCV 解碼驗證，並啟動本機測試伺服器。正式網站部署於 `https://lucas950219.github.io/data_structure/qrcode.html`；GitHub Pages 提供靜態網頁，因此正式頁面不使用本機簽到後端。
+這個專案使用 Python 產生網址 QR Code、以 OpenCV 解碼驗證，並把正式網站部署到 GitHub Pages：`https://lucas950219.github.io/data_structure/qrcode.html`。GitHub Pages 是靜態主機；公開頁的簽到表單只存在訪客自己的瀏覽器，不會回傳到 repo。`serve` 則提供本機測試後端，會記錄本機 HTTP 連線並將簽到寫入 `data/checkins.json`。
 
 ## 環境需求
 
 - Python 3.10 或更新版本
 - Windows、macOS 或 Linux
-- 手機與執行伺服器的電腦可連到相同 Wi-Fi，才能測試區網網站
+- 手機與電腦需連到相同 Wi-Fi，才能測試本機 `serve`；開啟 GitHub Pages 不需同網路
 
 ## 安裝
 
@@ -62,13 +62,13 @@ python qr_web.py compare --url https://www.google.com
 .\.venv\Scripts\python.exe tests\test_feature_matrix.py
 ```
 
-測試 F1、F3、F5、F6、F7、F8，以及 F4 的本機 HTTP 行為。F2 和 F4 的兩台實體手機要求仍需依 `feature_check.md` 手動完成；本機模擬用戶端不算手機證據。
+測試 F1、F3、F5、F6、F7、F8，並以公開網址檢查 F4 的 GitHub Pages 部署。F5 的時間、IP、路徑與瀏覽器紀錄，以及伺服器端簽到，需在本機 `serve` 中驗證；靜態 Pages 不提供這類伺服器紀錄。F2 與 F6/F7 的手機相機可讀性仍需實機驗證，請依 `feature_check.md` 記錄結果。
 
 ## 目錄
 
 ```text
 qr_web.py             CLI：make、decode、serve、compare
-site/                 自架網站及樣板
+site/                 GitHub Pages 網頁及本機 serve 樣板
 output/               QR Code PNG 圖片
 results/              每次執行的 JSON 與 Markdown 紀錄
 data/                 網站互動簽到資料
