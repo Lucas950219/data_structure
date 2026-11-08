@@ -53,6 +53,12 @@
     .qr-note { margin: 0; color: var(--muted); font-size: .86rem; }
     .qr-status { min-height: 1.5em; margin: 6px 0 0; color: var(--green-dark); font-size: .8rem; }
     @media (max-width: 520px) { .qr-block { flex-direction: column; align-items: flex-start; } }
+    .checkin-form { display: grid; gap: 10px; margin-top: 22px; padding: 18px; border: 1px solid var(--line); border-radius: 18px; background: var(--soft); }
+    .checkin-form label { display: grid; gap: 5px; color: var(--muted); font-size: .84rem; font-weight: 700; }
+    .checkin-form input, .checkin-form textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: white; font: inherit; }
+    .checkin-form textarea { resize: vertical; }
+    .checkin-form button { justify-self: start; }
+    .checkin-status { min-height: 1.5em; margin: 0; color: var(--green-dark); font-size: .84rem; }
     .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 20px; }
     button, .button-link { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 10px 18px; border: 0; border-radius: 999px; color: white; background: var(--green-dark); font: inherit; font-size: .9rem; font-weight: 800; text-decoration: none; cursor: pointer; }
     button:hover, .button-link:hover { background: var(--green); }
@@ -110,6 +116,13 @@
           <p class="qr-status" id="qr-status" role="status" aria-live="polite">正在載入 QR Code…</p>
         </div>
       </div>
+      <form class="checkin-form" id="checkin-form" action="/checkin" method="post">
+        <h2>互動簽到</h2>
+        <label>暱稱<input name="name" maxlength="50" required autocomplete="name" placeholder="請輸入暱稱"></label>
+        <label>留言<textarea name="message" maxlength="300" rows="3" placeholder="留下簡短回覆（選填）"></textarea></label>
+        <button type="submit">送出簽到</button>
+        <p class="checkin-status" id="checkin-status" role="status" aria-live="polite"></p>
+      </form>
       <div class="actions">
         <a class="button-link" href="https://lucas950219.github.io/data_structure/qrcode.html">開啟 GitHub Pages 網站</a>
         <button id="copy-link" type="button">複製正式網址</button>
@@ -133,6 +146,29 @@
     const copyButton = document.getElementById("copy-link");
     const copyStatus = document.getElementById("copy-status");
     const publicUrl = document.getElementById("public-url").href;
+    const checkinForm = document.getElementById("checkin-form");
+    const checkinStatus = document.getElementById("checkin-status");
+    if (location.hostname.endsWith("github.io")) {
+      checkinForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const values = new FormData(checkinForm);
+        const entry = {
+          time: new Date().toISOString(),
+          name: String(values.get("name") || "").trim(),
+          message: String(values.get("message") || "").trim()
+        };
+        try {
+          const key = "qrcode-assignment-checkins";
+          const entries = JSON.parse(localStorage.getItem(key) || "[]");
+          entries.push(entry);
+          localStorage.setItem(key, JSON.stringify(entries));
+          checkinStatus.textContent = "簽到已儲存在此瀏覽器；GitHub Pages 不會將資料傳回伺服器。";
+          checkinForm.reset();
+        } catch {
+          checkinStatus.textContent = "此瀏覽器無法儲存簽到資料。";
+        }
+      });
+    }
     const qrStatus = document.getElementById("qr-status");
     if (window.QRCode && typeof window.QRCode.toCanvas === "function") {
       window.QRCode.toCanvas(
