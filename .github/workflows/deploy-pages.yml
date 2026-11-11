@@ -29,10 +29,34 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Prepare website files
+        env:
+          WAITLIST_API_URL: ${{ vars.WAITLIST_API_URL }}
         run: |
-          mkdir _site
+          mkdir -p _site/assets
           cp index.html _site/index.html
           cp qrcode_assignment/site/index.html _site/qrcode.html
+          cp waitlist_project/waitlist.html _site/waitlist.html
+          cp waitlist_project/staff.html _site/staff.html
+          cp waitlist_project/styles.css _site/styles.css
+          cp waitlist_project/customer.js _site/customer.js
+          cp waitlist_project/staff.js _site/staff.js
+          cp waitlist_project/assets/waitlist-qr.png _site/assets/waitlist-qr.png
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          config = {
+              "apiBaseUrl": os.environ.get("WAITLIST_API_URL", "").rstrip("/"),
+              "publicPageUrl": "https://lucas950219.github.io/data_structure/waitlist.html",
+              "staffPageUrl": "https://lucas950219.github.io/data_structure/staff.html",
+              "pollIntervalMs": 5000,
+          }
+          Path("_site/config.js").write_text(
+              "window.WAITLIST_CONFIG = " + json.dumps(config, ensure_ascii=False) + ";\n",
+              encoding="utf-8",
+          )
+          PY
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4

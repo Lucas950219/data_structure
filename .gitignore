@@ -1,5 +1,8 @@
 /debug.log
 /gmail_assignment/
+!/gmail_assignment/
+/gmail_assignment/*
+!/gmail_assignment/gmail_auto.py
 /midterm/
 /qrcode_assignment/*
 !/qrcode_assignment/README.md
@@ -10,3 +13,6 @@
 qrcode_assignment/site/*
 !qrcode_assignment/site/index.html
 !qrcode_assignment/site/index.template.html
+/waitlist_project/.env
+/waitlist_project/data/
+/waitlist_project/__pycache__/
