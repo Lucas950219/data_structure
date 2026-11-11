@@ -8,12 +8,27 @@
   <meta name="referrer" content="no-referrer">
   <title>員工候位管理 — 好好候位</title>
   <style><?!= include_("Styles"); ?></style>
+  <style>
+    html.host-pending body > * { visibility: hidden !important; }
+    html.host-pending body::after { content: "正在驗證官方員工管理頁面…"; position: fixed; inset: 0; display: grid; place-items: center; background: #10151d; color: #e8eef8; font: 16px system-ui, sans-serif; z-index: 99999; }
+  </style>
+  <script>
+    (() => {
+      if (window.parent === window) return;
+      document.documentElement.classList.add("host-pending");
+      window.addEventListener("message", (event) => {
+        if (event.origin !== "https://lucas950219.github.io" || event.source !== window.parent || event.data?.type !== "waitlist-parent-handshake") return;
+        document.documentElement.classList.remove("host-pending");
+        event.source.postMessage({ type: "waitlist-app-ready" }, event.origin);
+      });
+    })();
+  </script>
 </head>
 <body class="staff-page">
   <div class="site-shell staff-shell">
     <header class="site-header">
-      <a class="wordmark" href="waitlist.html" aria-label="好好候位首頁"><span class="wordmark-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M8 9h16M8 16h16M8 23h9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="23" cy="23" r="2.4" fill="currentColor"/></svg></span><span><strong>好好候位</strong><small>STAFF CONSOLE</small></span></a>
-      <div class="header-actions"><span class="staff-header-label">員工管理介面</span><a class="staff-link" href="waitlist.html">回到候位頁 <span aria-hidden="true">↗</span></a></div>
+      <a class="wordmark" href="https://lucas950219.github.io/data_structure/waitlist.html" aria-label="好好候位首頁"><span class="wordmark-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M8 9h16M8 16h16M8 23h9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="23" cy="23" r="2.4" fill="currentColor"/></svg></span><span><strong>好好候位</strong><small>STAFF CONSOLE</small></span></a>
+      <div class="header-actions"><span class="staff-header-label">員工管理介面</span><a class="staff-link" href="https://lucas950219.github.io/data_structure/waitlist.html">回到候位頁 <span aria-hidden="true">↗</span></a></div>
     </header>
 
     <main class="staff-main">
@@ -43,7 +58,7 @@
       </section>
       <p class="staff-page-error" id="staff-page-error" role="alert"></p>
     </main>
-    <footer class="site-footer staff-footer"><span>好好候位 · 員工管理介面</span><a href="waitlist.html">前往顧客候位頁</a></footer>
+    <footer class="site-footer staff-footer"><span>好好候位 · 員工管理介面</span><a href="https://lucas950219.github.io/data_structure/waitlist.html">前往顧客候位頁</a></footer>
   </div>
   <div class="toast-region" id="staff-toast" role="status" aria-live="polite"></div>
   <script><?!= include_("StaffJS"); ?></script>

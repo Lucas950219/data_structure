@@ -8,15 +8,30 @@
   <meta name="referrer" content="no-referrer">
   <title>好好候位 — 線上候位</title>
   <style><?!= include_("Styles"); ?></style>
+  <style>
+    html.host-pending body > * { visibility: hidden !important; }
+    html.host-pending body::after { content: "正在驗證官方候位頁面…"; position: fixed; inset: 0; display: grid; place-items: center; background: #10151d; color: #e8eef8; font: 16px system-ui, sans-serif; z-index: 99999; }
+  </style>
+  <script>
+    (() => {
+      if (window.parent === window) return;
+      document.documentElement.classList.add("host-pending");
+      window.addEventListener("message", (event) => {
+        if (event.origin !== "https://lucas950219.github.io" || event.source !== window.parent || event.data?.type !== "waitlist-parent-handshake") return;
+        document.documentElement.classList.remove("host-pending");
+        event.source.postMessage({ type: "waitlist-app-ready" }, event.origin);
+      });
+    })();
+  </script>
 </head>
 <body class="customer-page">
   <div class="site-shell">
     <header class="site-header">
-      <a class="wordmark" href="waitlist.html" aria-label="好好候位首頁">
+      <a class="wordmark" href="https://lucas950219.github.io/data_structure/waitlist.html" aria-label="好好候位首頁">
         <span class="wordmark-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M8 9h16M8 16h16M8 23h9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="23" cy="23" r="2.4" fill="currentColor"/></svg></span>
         <span><strong>好好候位</strong><small>TABLE WAITLIST</small></span>
       </a>
-      <div class="header-actions"><span class="open-label"><i></i> 線上候位開放中</span><a class="staff-link" href="staff.html">員工登入 <span aria-hidden="true">↗</span></a></div>
+      <div class="header-actions"><span class="open-label"><i></i> 線上候位開放中</span><a class="staff-link" href="https://lucas950219.github.io/data_structure/staff.html">員工登入 <span aria-hidden="true">↗</span></a></div>
     </header>
 
     <main>
@@ -75,7 +90,7 @@
             <ol class="steps-list"><li><span>1</span><div><strong>填寫候位資料</strong><p>選擇用餐人數，系統會自動安排桌型。</p></div></li><li><span>2</span><div><strong>即時查看進度</strong><p>加入後可查看同桌型候位組數與前方組數。</p></div></li><li><span>3</span><div><strong>收到 E-mail 通知</strong><p>輪到您時，請留意信箱並前往櫃檯。</p></div></li></ol>
           </section>
           <section class="qr-card" aria-labelledby="qr-heading">
-            <div class="qr-copy"><p class="eyebrow">SCAN TO JOIN</p><h2 id="qr-heading">分享候位頁</h2><p>將 QR Code 放在店門口，讓客人用手機快速加入候位。</p><a class="download-link" href="assets/waitlist-qr.png" download="waitlist-qr.png">下載 QR Code <span aria-hidden="true">↓</span></a></div>
+            <div class="qr-copy"><p class="eyebrow">SCAN TO JOIN</p><h2 id="qr-heading">分享候位頁</h2><p>將 QR Code 放在店門口，讓客人用手機快速加入候位。</p><a class="download-link" href="https://lucas950219.github.io/data_structure/assets/waitlist-qr.png" download="waitlist-qr.png">下載 QR Code <span aria-hidden="true">↓</span></a></div>
             <img class="qr-image" src="assets/waitlist-qr.png" width="126" height="126" alt="掃描以開啟線上候位頁面的 QR Code">
           </section>
           <p class="privacy-caption">候位資料由餐廳員工管理，僅顯示候位號碼和桌型的公開進度。</p>
@@ -83,7 +98,7 @@
       </section>
     </main>
 
-    <footer class="site-footer"><a class="wordmark footer-mark" href="waitlist.html"><span class="wordmark-icon" aria-hidden="true">好</span><span><strong>好好候位</strong><small>WAIT LESS, ENJOY MORE</small></span></a><span>若已不需候位，請使用候位進度卡取消，或透過通知信中的連結取消。</span></footer>
+    <footer class="site-footer"><a class="wordmark footer-mark" href="https://lucas950219.github.io/data_structure/waitlist.html"><span class="wordmark-icon" aria-hidden="true">好</span><span><strong>好好候位</strong><small>WAIT LESS, ENJOY MORE</small></span></a><span>若已不需候位，請使用候位進度卡取消，或透過通知信中的連結取消。</span></footer>
   </div>
   <script><?!= include_("CustomerJS"); ?></script>
 </body>

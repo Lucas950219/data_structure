@@ -24,6 +24,10 @@
       const config = window.WAITLIST_CONFIG || {};
       const message = document.getElementById("launch-message");
       const frame = document.getElementById("app-frame");
+      if (window.top !== window.self) {
+        message.innerHTML = "<h1>員工候位管理</h1><p>請直接開啟官方員工管理網址，不要將管理頁嵌入其他網站。</p>";
+        return;
+      }
       const rawUrl = String(config.gasWebAppUrl || "").trim();
       if (!rawUrl) {
         message.innerHTML = "<h1>員工候位管理</h1><p>Apps Script 尚未部署或尚未設定網址。請完成部署後，在 GitHub Repository Variables 設定 <code>GAS_WEB_APP_URL</code>，再重新執行 Pages workflow。</p>";
@@ -40,6 +44,9 @@
       }
       appUrl.searchParams.set("view", "staff");
       appUrl.hash = window.location.hash;
+      frame.addEventListener("load", () => {
+        frame.contentWindow.postMessage({ type: "waitlist-parent-handshake" }, "*");
+      });
       frame.src = appUrl.toString();
       frame.hidden = false;
       message.hidden = true;
