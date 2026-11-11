@@ -8,7 +8,7 @@
 - 員工管理頁：https://lucas950219.github.io/data_structure/staff.html
 - 顧客 QR 圖：assets/waitlist-qr.png
 
-GitHub Pages 使用外層入口頁載入 Apps Script Web App。Apps Script 部署完成後，請設定 GitHub repository variable GAS_WEB_APP_URL 為 Web App 的 HTTPS /exec 網址，然後重新執行 Pages workflow。若還沒設定，入口頁會顯示部署說明。因為 Web App 需要被 Pages iframe 載入，頁面會驗證來自官方 GitHub Pages 網域的 handshake，並拒絕其他網站嵌入。
+GitHub Pages 使用外層入口頁載入 Apps Script Web App。將 Web App 的 HTTPS /exec 網址設在 config.js 的 gasWebAppUrl，或設定 GitHub repository variable GAS_WEB_APP_URL（後者優先），然後重新執行 Pages workflow。若還沒設定，入口頁會顯示部署說明。因為 Web App 需要被 Pages iframe 載入，頁面會驗證來自官方 GitHub Pages 網域的 handshake，並拒絕其他網站嵌入。
 
 ## Apps Script 部署
 
