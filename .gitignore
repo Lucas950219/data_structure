@@ -16,3 +16,6 @@ qrcode_assignment/site/*
 /waitlist_project/.env
 /waitlist_project/data/
 /waitlist_project/__pycache__/
+/waitlist_project/證據/
+/waitlist_project/操作紀錄.json
+/waitlist_project/*_候位系統.zip

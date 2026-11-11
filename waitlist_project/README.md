@@ -28,3 +28,15 @@ GitHub Pages 發布 `waitlist.html`、`staff.html`、`styles.css`、`app.js`、`
 - 員工登入及操作由後端驗證；顧客以簽章 token 查詢或取消自己的候位。
 - 1–2 位和 3–4 位分別進入 2 人桌、4 人桌的 Queue。F1–F11 對照見 `FEATURES.md`。
 - 部署後需用手機掃 QR Code，並檢查加入、錯誤密碼、寄信、入座、取消與統計。
+
+## 報告與繳交資料
+
+- `報告.md` 是依老師 3.1–3.12 項目整理的草稿。請填入實際設備資料，並補上真實截圖與操作紀錄；不要寫入員工密碼。
+- 貼上並部署新版 `Code.gs` 後，在自己的 Apps Script `/exec` 網址後加入 `?action=log&key=員工密碼`，可查看加入、通知、入座與取消的事件。紀錄從試算表中已保存的時間戳記重建，不含顧客姓名或 E-mail；網址中的密碼不應出現在截圖或繳交檔案。
+- 將完整 JSON 輸出存為 `操作紀錄.json`，實際截圖放入 `證據/` 並完成報告後，可執行：
+
+  ```powershell
+  python waitlist_project/package_submission.py --student-id 學號 --name 姓名 --log waitlist_project/操作紀錄.json --screenshots waitlist_project/證據
+  ```
+
+  程式會檢查紀錄至少包含三次加入、一次通知與一次入座，並在 ZIP 中把前端 API 網址改成假值。仍須自行確認是三組不同顧客、截圖完整且已遮蔽個資。

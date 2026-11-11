@@ -6,18 +6,69 @@ const QUEUE_HEADERS = [
 ];
 const ACTIVE_STATUSES = ['waiting', 'notifying', 'notified'];
 
+/** FIFO queue for one date and table type. The sheet remains the persistent store. */
+class WaitlistQueue {
+  constructor() { this.items = []; }
+  enqueue(entry) { this.items.push(entry); }
+  remove(id) {
+    const index = this.positionOf(id);
+    return index < 0 ? null : this.items.splice(index, 1)[0];
+  }
+  positionOf(id) { return this.items.findIndex(item => item.id === String(id)); }
+  size() { return this.items.length; }
+  toArray() { return this.items.slice(); }
+}
+
+function activeQueue_(entries, day, tableType) {
+  const queue = new WaitlistQueue();
+  entries.filter(entry => entry.queueDay === day && entry.tableType === tableType &&
+    ACTIVE_STATUSES.indexOf(entry.status) >= 0)
+    .sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)))
+    .forEach(entry => queue.enqueue(entry));
+  return queue;
+}
+
 /** Public health/count endpoint. Example: /exec?action=count -> {"waiting":0}. */
 function doGet(e) {
-  const action = String((e && e.parameter && e.parameter.action) || '');
+  const params = (e && e.parameter) || {};
+  const action = String(params.action || '');
   if (action === 'count') {
     const summary = queueSummary_();
     return ContentService.createTextOutput(JSON.stringify({ waiting: summary.queueSize }))
       .setMimeType(ContentService.MimeType.JSON);
   }
+  if (action === 'log') {
+    try {
+      const expected = PropertiesService.getScriptProperties().getProperty('STAFF_PASSWORD') || '';
+      if (!expected || !constantTimeEquals_(String(params.key || ''), expected)) {
+        throw apiError_(401, 'invalid_password', '員工密碼錯誤或尚未設定。');
+      }
+      return ContentService.createTextOutput(JSON.stringify(activityLog_(), null, 2))
+        .setMimeType(ContentService.MimeType.JSON);
+    } catch (error) {
+      return ContentService.createTextOutput(JSON.stringify({ error: error.code || 'log_error', message: error.message }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
   return ContentService.createTextOutput(JSON.stringify({
     service: 'waitlist',
     message: 'Use the GitHub Pages customer and staff pages. For the status check, add ?action=count.'
   })).setMimeType(ContentService.MimeType.JSON);
+}
+
+/** Reconstruct recorded events from existing row timestamps, without personal data. */
+function activityLog_() {
+  const events = [];
+  getEntries_().forEach(entry => {
+    [ ['join', 'createdAt'], ['notify', 'notifiedAt'], ['seat', 'seatedAt'], ['cancel', 'cancelledAt'] ]
+      .forEach(([action, field]) => {
+        if (entry[field]) events.push({ time: entry[field], action, ticket: entry.ticket, tableType: entry.tableType });
+      });
+  });
+  events.sort((a, b) => String(a.time).localeCompare(String(b.time)));
+  const counts = { join: 0, notify: 0, seat: 0, cancel: 0 };
+  events.forEach(event => { counts[event.action]++; });
+  return { counts, events };
 }
 
 /**
@@ -180,10 +231,11 @@ function queueJoin_(body) {
 }
 
 function queueSummary_() {
-  const active = getEntries_().filter(entry => entry.queueDay === today_() && ACTIVE_STATUSES.indexOf(entry.status) >= 0);
+  const entries = getEntries_();
+  const day = today_();
   const lanes = {
-    '2p': active.filter(entry => entry.tableType === '2p').length,
-    '4p': active.filter(entry => entry.tableType === '4p').length
+    '2p': activeQueue_(entries, day, '2p').size(),
+    '4p': activeQueue_(entries, day, '4p').size()
   };
   return { lanes, queueSize: lanes['2p'] + lanes['4p'], updatedAt: new Date().toISOString() };
 }
@@ -197,15 +249,13 @@ function queueStatus_(authorization) {
 }
 
 function customerStatusFor_(entry, entries) {
-  const laneEntries = entries
-    .filter(item => item.queueDay === entry.queueDay && item.tableType === entry.tableType && ACTIVE_STATUSES.indexOf(item.status) >= 0)
-    .sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
+  const queue = activeQueue_(entries, entry.queueDay, entry.tableType);
   const groupsAhead = entry.status === 'waiting' || entry.status === 'notifying' || entry.status === 'notified'
-    ? laneEntries.filter(item => String(item.createdAt) < String(entry.createdAt)).length
+    ? Math.max(0, queue.positionOf(entry.id))
     : 0;
   const result = {
     id: entry.id, ticket: entry.ticket, status: entry.status, tableType: entry.tableType,
-    partySize: entry.partySize, queueSize: laneEntries.length, groupsAhead,
+    partySize: entry.partySize, queueSize: queue.size(), groupsAhead,
     estimatedWaitMinutes: groupsAhead * Number(PropertiesService.getScriptProperties().getProperty('WAIT_MIN_PER_GROUP') || 10),
     updatedAt: new Date().toISOString()
   };
@@ -225,7 +275,12 @@ function queueCancel_(token) {
     if (entry.status !== 'waiting' && entry.status !== 'notified' && entry.status !== 'cancelled') {
       throw apiError_(409, 'not_cancellable', '這筆候位已結束，無法取消。');
     }
-    if (entry.status !== 'cancelled') updateEntry_(entry.id, { status: 'cancelled', cancelledAt: new Date().toISOString() });
+    if (entry.status !== 'cancelled') {
+      if (!activeQueue_(entries, entry.queueDay, entry.tableType).remove(entry.id)) {
+        throw apiError_(409, 'entry_not_active', '這筆候位目前不在等候佇列中。');
+      }
+      updateEntry_(entry.id, { status: 'cancelled', cancelledAt: new Date().toISOString() });
+    }
     const updated = Object.assign({}, entry, { status: 'cancelled', cancelledAt: new Date().toISOString() });
     return customerStatusFor_(updated, getEntries_());
   } finally {
@@ -247,9 +302,10 @@ function requireStaff_(authorization) {
 
 function staffQueue_(lane) {
   if (['all', '2p', '4p'].indexOf(lane) < 0) lane = 'all';
-  const entries = getEntries_()
-    .filter(entry => entry.queueDay === today_() && ACTIVE_STATUSES.indexOf(entry.status) >= 0)
-    .filter(entry => lane === 'all' || entry.tableType === lane)
+  const allEntries = getEntries_();
+  const day = today_();
+  const selectedLanes = lane === 'all' ? ['2p', '4p'] : [lane];
+  const entries = selectedLanes.flatMap(type => activeQueue_(allEntries, day, type).toArray())
     .sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)))
     .map(entry => Object.assign({}, entry, {
       waitMinutes: Math.max(0, Math.floor((Date.now() - new Date(entry.createdAt).getTime()) / 60000))
@@ -314,10 +370,14 @@ function staffChangeStatus_(id, action) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    const entry = getEntries_().find(item => item.id === String(id) && item.queueDay === today_());
+    const entries = getEntries_();
+    const entry = entries.find(item => item.id === String(id) && item.queueDay === today_());
     if (!entry) throw apiError_(404, 'entry_not_found', '找不到這筆候位資料。');
     if (entry.status !== 'waiting' && entry.status !== 'notified') {
       throw apiError_(409, 'invalid_status', '這筆候位目前無法執行該操作。');
+    }
+    if (!activeQueue_(entries, entry.queueDay, entry.tableType).remove(entry.id)) {
+      throw apiError_(409, 'entry_not_active', '這筆候位目前不在等候佇列中。');
     }
     const changedAt = new Date().toISOString();
     const patch = { status };
