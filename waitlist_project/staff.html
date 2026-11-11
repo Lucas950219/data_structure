@@ -44,12 +44,27 @@
       }
       appUrl.searchParams.set("view", "staff");
       appUrl.hash = window.location.hash;
+      let appReady = false;
+      let handshakeTimeout = 0;
+      window.addEventListener("message", (event) => {
+        if (event.source !== frame.contentWindow) return;
+        if (!["https://script.google.com", "https://script.googleusercontent.com"].includes(event.origin)) return;
+        if (event.data?.type !== "waitlist-app-ready") return;
+        appReady = true;
+        window.clearTimeout(handshakeTimeout);
+        frame.hidden = false;
+        message.hidden = true;
+      });
       frame.addEventListener("load", () => {
         frame.contentWindow.postMessage({ type: "waitlist-parent-handshake" }, "*");
+        handshakeTimeout = window.setTimeout(() => {
+          if (appReady) return;
+          message.innerHTML = "<h1>員工頁尚未完成設定</h1><p>目前 Apps Script 回傳的不是候位介面。請將專案的 Code.gs、Customer、Staff、Styles、CustomerJS 和 StaffJS 檔案更新後，重新部署 Web App。</p>";
+          message.hidden = false;
+          frame.hidden = true;
+        }, 10000);
       });
       frame.src = appUrl.toString();
-      frame.hidden = false;
-      message.hidden = true;
     })();
   </script>
 </body>
