@@ -348,11 +348,19 @@ function getEntries_() {
   if (lastRow < 2) return [];
   const values = sheet.getRange(1, 1, lastRow, QUEUE_HEADERS.length).getValues();
   const headers = values[0].map(String);
+  const spreadsheetTimeZone = sheet.getParent().getSpreadsheetTimeZone();
   const index = {};
   headers.forEach((name, i) => index[name] = i);
   return values.slice(1).map(row => {
     const item = {};
-    QUEUE_HEADERS.forEach(key => item[key] = cellString_(row[index[key]]));
+    QUEUE_HEADERS.forEach(key => {
+      const value = row[index[key]];
+      // Sheets can automatically convert a yyyy-MM-dd string to a Date.
+      // Recover the calendar date in the spreadsheet's own time zone.
+      item[key] = key === 'queueDay' && value instanceof Date
+        ? Utilities.formatDate(value, spreadsheetTimeZone, 'yyyy-MM-dd')
+        : cellString_(value);
+    });
     item.partySize = Number(item.partySize) || 0;
     return item;
   }).filter(item => item.id);
@@ -360,6 +368,8 @@ function getEntries_() {
 
 function appendEntry_(entry) {
   const sheet = getQueueSheet_();
+  // Store new queue dates as text so future reads do not depend on sheet locale.
+  sheet.getRange(sheet.getLastRow() + 1, QUEUE_HEADERS.indexOf('queueDay') + 1).setNumberFormat('@');
   sheet.appendRow(QUEUE_HEADERS.map(key => entry[key] == null ? '' : entry[key]));
 }
 
