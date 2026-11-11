@@ -20,7 +20,7 @@ GitHub Pages 發布 `waitlist.html`、`staff.html`、`styles.css`、`app.js`、`
 5. 在「部署 → 管理部署作業」編輯現有網頁應用程式，版本選「新版本」並部署；執行身分選「我」，存取權選「所有人」。若尚未部署，先新增網頁應用程式部署。每次修改程式後都要更新部署版本。
 6. 開啟部署網址並加上 `?action=count`。初始化成功時會看到 `{"waiting":0}`（若已有候位，數字會不同）。還需要使用顧客及員工頁確認完整流程。
 
-目前 `config.js` 已填入提供的 `/exec` 網址。若更新部署後網址改變，更新 `config.js` 或 GitHub repository variable `GAS_WEB_APP_URL`（後者優先），再重新發布 Pages。
+目前 `config.js` 已填入提供的 `/exec` 網址。若更新部署後網址改變，更新 `config.js` 再重新發布 Pages；若 `config.js` 未設定網址，workflow 才會使用 GitHub repository variable `GAS_WEB_APP_URL`。
 
 ## 補充
 
