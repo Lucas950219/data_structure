@@ -2,22 +2,23 @@
 
 | 編號 | 要求 | 實作位置 | 狀態／驗收備註 |
 |---|---|---|---|
-| F1 | 顧客頁與員工頁放在 GitHub Pages，以網址開啟 | `index.html`、`staff.html`；Pages workflow 發布為 `/waitlist.html`、`/staff.html` | workflow 已準備；需推送並設定 `WAITLIST_API_URL` 才能連線。 |
-| F2 | 顧客掃 QR Code 進入候位網頁（手機測試） | `assets/waitlist-qr.png` 由既有 `qrcode_assignment/qr_web.py` 產生，指向顧客頁 | QR 已產生；實體手機掃描尚待驗收。 |
-| F3 | 姓名、性別、E-mail 必填；enqueue 進 Queue 並取得候位號碼 | 顧客表單、`POST /api/queue`、SQLite `queue_entries` | 有伺服器端欄位驗證；另要求 1–4 人用餐人數與資料使用同意。 |
-| F4 | 顧客看到當前候位組數、前方組數並自動更新 | `/api/queue/summary`、`/api/queue/status`；前端每 5 秒輪詢 | 支援依 2 人桌／4 人桌分流後顯示。 |
-| F5 | 員工登入後查看號碼、姓名、性別、人數、E-mail、候位時間、狀態 | `staff.html`、`GET /api/staff/queue` | Queue API 需要有效員工 token。 |
-| F6 | 員工按「通知」後端用 Gmail 寄信，狀態改為「已通知」 | `POST /api/staff/entries/{id}/notify`；沿用 `gmail_assignment/gmail_auto.py` 的 `load_config` 與 `create_smtp` | 只有 SMTP 接受郵件後才更新；寄送失敗會恢復「候位中」。尚未寄送實信驗收。 |
-| F7 | 員工按「入座」或「取消」將該組移出 Queue，前方組數減少 | 員工操作 API 將狀態設為 `seated` 或 `cancelled`；歷史資料保留 | 公開與員工 Queue 只計算活動中的紀錄。 |
-| F8 | 員工密碼錯誤時不能看 Queue、不能操作 | `POST /api/staff/login`、8 小時簽章 token、員工 API 驗證 | 頁面登入前不讀取候位 API；登入錯誤時不顯示 Queue。 |
-| F9 | 顧客可自行取消候位 | 顧客進度卡及通知 E-mail 的簽章取消連結；`POST /api/queue/cancel` | 只允許尚未入座的活動候位取消。 |
-| F10 | 統計今日總候位、平均等候時間、放棄率等 | `GET /api/staff/stats` | 平均時間取已入座紀錄；放棄率暫定為取消數 ÷ 今日總候位數。 |
-| F11 | Queue 可超過 50 組，或依桌型分流 | SQLite 持久資料表、日期＋桌型票號、2 人桌與 4 人桌獨立 Queue | 不設 50 組上限；雲端部署需掛載持久磁碟。 |
+| F1 | 顧客頁與員工頁放在 GitHub Pages，以網址開啟 | waitlist.html、staff.html；Pages workflow 發布公開入口；Apps Script Web App 顯示互動介面 | Pages workflow 已部署；設定 GAS_WEB_APP_URL 後入口才會載入 Apps Script。 |
+| F2 | 顧客掃 QR Code 進入候位網頁（手機測試） | assets/waitlist-qr.png 由既有 qrcode_assignment/qr_web.py 產生，指向顧客頁 | QR 圖已產生；需以手機實際掃描驗收。 |
+| F3 | 姓名、性別、E-mail 必填；enqueue 進 Queue 並取得候位號碼 | Apps Script apiRpc、queueJoin_；Google 試算表 Queue | 伺服器端驗證欄位、同意與 1–4 人用餐人數；初始化後產生候位號碼與顧客 token。 |
+| F4 | 顧客看到目前候位組數、前方組數並自動更新 | queueSummary_、queueStatus_；顧客頁每 5 秒透過 google.script.run 更新 | 支援 2 人桌／4 人桌分流。 |
+| F5 | 員工登入後查看號碼、姓名、性別、人數、E-mail、候位時間、狀態 | staffLogin_、staffQueue_；Staff.html | API 每次讀取員工資料都驗證 8 小時簽章 token。 |
+| F6 | 員工按「通知」後端用 Gmail 寄信，狀態改為「已通知」 | staffNotify_、MailApp.sendEmail | 寄送成功才更新狀態；失敗會回復「候位中」。需由 Apps Script 部署者授權寄信。 |
+| F7 | 員工按「入座」或「取消」將該組移出 Queue，前方組數減少 | staffChangeStatus_；狀態設為 seated 或 cancelled | 保留歷史資料，活動 Queue 不再計入完成或取消項目。 |
+| F8 | 員工密碼錯誤時不能看到 Queue、不能操作 | staffLogin_、requireStaff_ | 前端登入前不載入員工清單；所有員工資料與操作都須有效 token。 |
+| F9 | 顧客可自行取消候位 | queueCancel_；顧客頁取消按鈕及通知信連結 | 使用簽章 token；已入座或通知寄送中不可取消。 |
+| F10 | 統計今日總候位、平均等候時間、放棄率等 | staffStats_ | 平均等候時間取今日已入座紀錄；放棄率為今日取消組數 ÷ 今日總候位組數。 |
+| F11 | Queue 可超過 50 組，或依桌型分流 | queueJoin_、Google 試算表、LockService | 無 50 組上限；依日期與桌型分開編號，1–2 位及 3–4 位分流，鎖定寫入避免重號。 |
 
-## 尚待完成的環境驗收
+## 部署與實機驗收
 
-- [ ] 推送 Pages workflow 並確認公開顧客頁和員工頁能開啟。
-- [ ] 設定 `WAITLIST_API_URL`，部署 API 並掛載持久磁碟。
-- [ ] 用實體手機掃描 QR Code 完成一筆候位。
-- [ ] 以正確與錯誤密碼驗證員工頁存取。
-- [ ] 設定 Gmail 應用程式密碼並實際驗證通知信與取消連結。
+- [x] GitHub Pages workflow 已發布顧客與員工入口頁。
+- [ ] 將 apps_script/ 推送到老師提供的 Apps Script 專案。
+- [ ] 執行 setupWaitlist_、設定 STAFF_PASSWORD，並部署 Web App。
+- [ ] 將 Apps Script /exec 網址設為 GitHub repository variable GAS_WEB_APP_URL，重新部署 Pages。
+- [ ] 用手機掃描 QR Code 完成候位，並驗證顧客取消。
+- [ ] 驗證錯誤／正確員工密碼、通知、入座、取消和統計。

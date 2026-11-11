@@ -30,7 +30,7 @@ jobs:
 
       - name: Prepare website files
         env:
-          WAITLIST_API_URL: ${{ vars.WAITLIST_API_URL }}
+          GAS_WEB_APP_URL: ${{ vars.GAS_WEB_APP_URL }}
         run: |
           mkdir -p _site/assets
           cp index.html _site/index.html
@@ -47,7 +47,7 @@ jobs:
           from pathlib import Path
 
           config = {
-              "apiBaseUrl": os.environ.get("WAITLIST_API_URL", "").rstrip("/"),
+              "gasWebAppUrl": os.environ.get("GAS_WEB_APP_URL", "").rstrip("/"),
               "publicPageUrl": "https://lucas950219.github.io/data_structure/waitlist.html",
               "staffPageUrl": "https://lucas950219.github.io/data_structure/staff.html",
               "pollIntervalMs": 5000,

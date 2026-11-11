@@ -21,6 +21,28 @@
   }
 
   async function request(path, options = {}) {
+    if (typeof google !== "undefined" && google.script && google.script.run) {
+      return new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler((result) => {
+            if (!result || result.ok !== true) {
+              const error = new Error(result?.message || "請求失敗，請稍後再試。");
+              error.status = result?.status || 500;
+              error.code = result?.error || "server_error";
+              reject(error);
+              return;
+            }
+            resolve(result.data);
+          })
+          .withFailureHandler((error) => reject(new Error(error?.message || "Apps Script 連線失敗。")))
+          .apiRpc({
+            path,
+            method: options.method || "GET",
+            body: options.body || {},
+            authorization: options.headers?.Authorization || "",
+          });
+      });
+    }
     if (!apiBase) throw new Error("候位服務尚未設定 API 網址，請稍後再試。");
     let response;
     try {

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f4ef">
+  <meta name="description" content="員工候位管理與候位統計。">
+  <meta name="referrer" content="no-referrer">
+  <title>員工候位管理 — 好好候位</title>
+  <style><?!= include_("Styles"); ?></style>
+</head>
+<body class="staff-page">
+  <div class="site-shell staff-shell">
+    <header class="site-header">
+      <a class="wordmark" href="waitlist.html" aria-label="好好候位首頁"><span class="wordmark-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M8 9h16M8 16h16M8 23h9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="23" cy="23" r="2.4" fill="currentColor"/></svg></span><span><strong>好好候位</strong><small>STAFF CONSOLE</small></span></a>
+      <div class="header-actions"><span class="staff-header-label">員工管理介面</span><a class="staff-link" href="waitlist.html">回到候位頁 <span aria-hidden="true">↗</span></a></div>
+    </header>
+
+    <main class="staff-main">
+      <section class="staff-intro"><p class="eyebrow">STAFF CONSOLE <span></span> 今日營運</p><h1>候位管理</h1><p>登入後查看候位資料、寄送通知並更新桌況。</p></section>
+
+      <section class="login-card" id="login-panel" aria-labelledby="login-heading">
+        <div class="login-art" aria-hidden="true"><span class="login-art-number">H</span><span class="login-art-caption">GOOD THINGS<br>TAKE TIME</span></div>
+        <div class="login-content"><p class="eyebrow">STAFF ONLY</p><h2 id="login-heading">員工登入</h2><p>請輸入管理密碼以查看候位清單。</p>
+          <form id="staff-login" novalidate><label class="field-label" for="staff-password">管理密碼</label><input class="text-input" id="staff-password" name="password" type="password" autocomplete="current-password" required placeholder="請輸入員工密碼"><p class="form-message" id="login-message" role="alert"></p><button class="primary-button" id="login-button" type="submit"><span>安全登入</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4"/></svg></button></form>
+          <p class="login-security"><span aria-hidden="true">▣</span> 密碼由後端驗證；錯誤密碼無法讀取候位資料。</p>
+        </div>
+      </section>
+
+      <section class="staff-dashboard" id="staff-dashboard" hidden aria-labelledby="dashboard-heading">
+        <div class="dashboard-heading"><div><p class="eyebrow">LIVE SERVICE</p><h2 id="dashboard-heading">今日候位總覽</h2></div><div class="dashboard-actions"><span class="last-updated" id="staff-updated">更新中…</span><button class="secondary-button logout-button" id="logout-button" type="button">登出</button></div></div>
+        <div class="staff-stats" aria-label="今日候位統計">
+          <article class="staff-stat"><span>今日候位總數</span><strong id="stat-total">0</strong><small>組客人</small></article>
+          <article class="staff-stat"><span>目前等候中</span><strong id="stat-active">0</strong><small>組客人</small></article>
+          <article class="staff-stat"><span>平均等候時間</span><strong id="stat-average">—</strong><small>分鐘</small></article>
+          <article class="staff-stat stat-abandon"><span>放棄率</span><strong id="stat-abandonment">0%</strong><small id="stat-cancelled">今日取消 0 組</small></article>
+        </div>
+        <div class="queue-board panel-card">
+          <div class="board-heading"><div><p class="eyebrow">ACTIVE QUEUE</p><h2>候位 Queue <span class="board-count" id="staff-queue-count">0</span></h2></div><div class="lane-filters" role="group" aria-label="依桌型篩選"><button class="lane-filter is-active" data-lane="all" type="button" aria-pressed="true">全部桌型</button><button class="lane-filter" data-lane="2p" type="button" aria-pressed="false">2 人桌</button><button class="lane-filter" data-lane="4p" type="button" aria-pressed="false">4 人桌</button></div></div>
+          <div class="table-wrap"><table class="queue-table"><thead><tr><th>候位號碼</th><th>姓名 / 性別</th><th>人數 / 桌型</th><th>E-mail</th><th>候位時間</th><th>狀態</th><th><span class="visually-hidden">操作</span></th></tr></thead><tbody id="staff-queue-body"></tbody></table><div class="staff-empty" id="staff-empty" hidden><span aria-hidden="true">✳</span><strong>目前沒有候位客人</strong><p>有新客人加入後，資料會自動出現在這裡。</p></div></div>
+        </div>
+        <p class="staff-data-note">候位資料定時更新 · 狀態變更與統計由後端保存</p>
+      </section>
+      <p class="staff-page-error" id="staff-page-error" role="alert"></p>
+    </main>
+    <footer class="site-footer staff-footer"><span>好好候位 · 員工管理介面</span><a href="waitlist.html">前往顧客候位頁</a></footer>
+  </div>
+  <div class="toast-region" id="staff-toast" role="status" aria-live="polite"></div>
+  <script><?!= include_("StaffJS"); ?></script>
+</body>
+</html>

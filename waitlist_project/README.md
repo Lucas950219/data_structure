@@ -1,46 +1,46 @@
 # 好好候位
 
-顧客候位頁與員工管理頁的輕量候位系統。前端是 GitHub Pages 靜態頁；Python 標準函式庫 API 用 SQLite 保存 Queue。這次直接整合工作區既有的 QR 與 Gmail 作業：QR 產生沿用 `qrcode_assignment/qr_web.py`，SMTP 帳密載入與連線沿用 `gmail_assignment/gmail_auto.py`。
+顧客候位與員工管理系統。顧客頁與員工頁由 GitHub Pages 提供入口，互動介面和後端由 Google Apps Script Web App 執行，Queue 資料保存在私有 Google 試算表。Apps Script 透過 google.script.run 呼叫伺服器函式，避免從 GitHub Pages 直接跨網域呼叫 Apps Script API。
 
-## 頁面
+## 公開頁面
 
-- 顧客候位頁：<https://lucas950219.github.io/data_structure/waitlist.html>
-- 員工管理頁：<https://lucas950219.github.io/data_structure/staff.html>
-- API 健康檢查：部署後的 API 網址加上 `/health`
+- 顧客候位頁：https://lucas950219.github.io/data_structure/waitlist.html
+- 員工管理頁：https://lucas950219.github.io/data_structure/staff.html
+- 顧客 QR 圖：assets/waitlist-qr.png
 
-Pages 部署 workflow 已加入這兩個頁面與 QR 圖；推送到 `main` 後會發布靜態檔案。要讓表單和 Queue 真正可用，還需把 Python API 部署到支援 HTTPS 與持久磁碟的主機。
+GitHub Pages 使用外層入口頁載入 Apps Script Web App。Apps Script 部署完成後，請設定 GitHub repository variable GAS_WEB_APP_URL 為 Web App 的 HTTPS /exec 網址，然後重新執行 Pages workflow。若還沒設定，入口頁會顯示部署說明。
 
-## 本機執行
+## Apps Script 部署
 
-1. 將 `.env.example` 複製成 `.env`，設定 `APP_SECRET` 和 `WAITLIST_ADMIN_PASSWORD`。`APP_SECRET` 請用至少 32 個字元的隨機字串，可用 `python -c "import secrets; print(secrets.token_urlsafe(48))"` 產生。
-2. Gmail 可用 `GMAIL_ADDRESS`、`GMAIL_APP_PASSWORD` 環境變數設定；本機也可沿用 `gmail_assignment/config.json`。環境變數優先。不要提交 `.env`、帳號密碼或 SQLite 資料庫。
-3. 在 repo 根目錄執行 `python waitlist_project/server.py`。
-4. 另開終端機執行 `python -m http.server 5500 --directory waitlist_project`。
-5. 開啟 `http://127.0.0.1:5500/index.html`；員工頁為 `http://127.0.0.1:5500/staff.html`。
+原始碼位於 apps_script/，.clasp.json 已指向作業提供的 Script ID。
 
-只有員工在管理頁按下「通知」時才會透過既有 Gmail helper 寄信；寄送成功後狀態才變為「已通知」。此工作階段沒有寄送任何實際郵件。
+1. 安裝 clasp 並登入：npm install -g @google/clasp，接著 clasp login。
+2. 在 repo 根目錄執行 cd waitlist_project/apps_script，再執行 clasp push，把這個目錄同步到指定 Apps Script 專案。
+3. 開啟老師提供的 Apps Script 專案，在編輯器選取並執行 setupWaitlist_，授權建立私有 Queue 試算表；再執行 authorizeGmail_ 並授權寄信。執行記錄會列出試算表網址與 Gmail 授權狀態。
+4. 開啟「專案設定 → 指令碼屬性」，新增：
+   - STAFF_PASSWORD：自行設定的員工密碼。
+   - PUBLIC_SITE_URL：https://lucas950219.github.io/data_structure/waitlist.html
+   - WAIT_MIN_PER_GROUP：例如 10。
+   TOKEN_SECRET 與 WAITLIST_SHEET_ID 會由初始化函式建立，不要公開或刪除。
+5. 選「部署 → 新增部署作業 → 網頁應用程式」：執行身分選「我」，存取權選「所有人」，部署並完成 Google Sheets 與 Gmail 授權。複製產生的 HTTPS /exec 網址。
+6. 到 GitHub repo「Settings → Secrets and variables → Actions → Variables」新增 GAS_WEB_APP_URL，值填剛才的 /exec 網址；再到「Actions → Deploy to GitHub Pages → Run workflow」發布入口頁。
 
-## 部署設定
+### Gmail 通知
 
-Pages workflow 會讀取 GitHub repository variable `WAITLIST_API_URL`，並產生正式版 `config.js`。請將它設為 API 的 HTTPS base URL，例如 `https://waitlist-api.example.com`，不要加 `/api`。後端要設定：
+Apps Script 使用 MailApp.sendEmail 從部署者的 Google 帳號寄信，並只要求寄信權限。第一次部署前執行 authorizeGmail_ 完成授權；雲端版不需要把 gmail_assignment/config.json 的 App Password 放進程式碼或 GitHub。config.json 仍可供原本的 Python Gmail 作業使用。
 
-- `APP_SECRET`、`WAITLIST_ADMIN_PASSWORD`
-- `GMAIL_ADDRESS`、`GMAIL_APP_PASSWORD`（或部署時提供 Gmail helper 可讀取的設定檔）
-- `PUBLIC_SITE_URL=https://lucas950219.github.io/data_structure/waitlist.html`
-- `ALLOWED_ORIGINS=https://lucas950219.github.io`
-- `DATABASE_PATH` 指向主機的持久磁碟，例如 `/var/data/waitlist.sqlite3`
-- 主機要求的 `HOST=0.0.0.0` 與 `PORT`
+### 資料與安全
 
-Pages 不會執行 Python，也不會保存 SQLite，因此 API 與持久磁碟必須另行部署。API 尚未設定時，頁面會顯示連線提示，資料無法跨裝置同步。QR Code 目前指向上方顧客頁；若頁面網址不同，請更新 `.env` 的 `PUBLIC_SITE_URL`，再執行 `qrcode_assignment/.venv/Scripts/python.exe waitlist_project/build_qr.py` 重新產圖。
+- Queue 試算表由初始化函式建立，預設保持私人，不要公開分享。
+- 員工密碼只放在 Apps Script 指令碼屬性，不放在 Git。
+- 公開摘要只回傳人數；個人資料須使用員工登入 token 才會回傳。顧客進度與取消使用簽章 token。
+- 顧客 1–2 位進入 2 人桌 Queue，3–4 位進入 4 人桌 Queue；號碼按日期和桌型分開，不限制 50 組。
+- 通知成功後才更新成「已通知」；取消、入座等歷史資料會留在試算表供統計。
 
-後端可用 repo 根目錄的 Docker build context 建置：`docker build -f waitlist_project/Dockerfile -t waitlist-api .`。部署時需掛載持久磁碟到 `/var/lib/waitlist`，並設定上述環境變數；容器不含任何密碼或 Gmail 設定檔。
+## F1–F11
 
-## 資料與分流
+詳細功能對照與待完成的實機驗收見 FEATURES.md。
 
-- 1–2 位自動進入 2 人桌 Queue；3–4 位進入 4 人桌 Queue。
-- SQLite 可保存超過 50 組紀錄；候位號碼依日期和桌型分開遞增。歷史紀錄保留供統計，不會再算入目前 Queue。
-- 顧客進度使用簽章 token 查詢，員工登入使用短效 HMAC token；員工 token 放在分頁工作階段，登出時清除。
-- 平均等候時間以當日已入座紀錄計算；放棄率目前以當日取消組數除以當日總候位組數計算。
-- 通知郵件含顧客自助取消連結；候位頁也可自行取消。個人資料只在受保護的員工 API 回傳，公開摘要不含姓名或 E-mail。
+## Python 本機版本
 
-詳細 F1–F11 對照見 [`FEATURES.md`](FEATURES.md)。手機實掃、正式 Pages 發布、雲端 API 與實際 Gmail 寄送仍需在對應裝置和帳號環境完成。
+server.py 保留為原本的本機測試 API，使用標準函式庫與 SQLite；正式雲端入口使用上方 Apps Script 專案。QR 產生沿用 qrcode_assignment/qr_web.py，Python Gmail helper 保留給既有 Gmail 作業使用。
