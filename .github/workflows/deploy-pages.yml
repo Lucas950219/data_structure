@@ -46,8 +46,18 @@ jobs:
           import os
           from pathlib import Path
 
+          source_config = json.loads(
+              Path("waitlist_project/config.js")
+              .read_text(encoding="utf-8")
+              .split("=", 1)[1]
+              .strip()
+              .rstrip(";")
+          )
           config = {
-              "gasWebAppUrl": os.environ.get("GAS_WEB_APP_URL", "").rstrip("/"),
+              "gasWebAppUrl": (
+                  os.environ.get("GAS_WEB_APP_URL", "").rstrip("/")
+                  or str(source_config.get("gasWebAppUrl", "")).rstrip("/")
+              ),
               "publicPageUrl": "https://lucas950219.github.io/data_structure/waitlist.html",
               "staffPageUrl": "https://lucas950219.github.io/data_structure/staff.html",
               "pollIntervalMs": 5000,
