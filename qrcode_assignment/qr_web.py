@@ -305,7 +305,7 @@ def serve(args: argparse.Namespace, result: RunResult) -> None:
     qr_url = args.qr_url or config.get("qr_url") or local_url
     validate_url(qr_url)
     qr_path = project_path(args.out)
-    make_qr(qr_url, qr_path, f"掃描開啟：{qr_url}", None, "M", 10, result)
+    make_qr(qr_url, qr_path, "掃描開啟", None, "M", 10, result)
     decoded = decode_qr(qr_path, result)
     result.step("QR 網址比對", decoded == qr_url, "解碼內容與 QR 網址相同。" if decoded == qr_url else "解碼內容與 QR 網址不相同。")
     result.qr_info.update({
