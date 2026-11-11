@@ -10,6 +10,7 @@
 !/qrcode_assignment/qr_web.py
 !/qrcode_assignment/requirements.txt
 !/qrcode_assignment/site/
+!/qrcode_assignment/apps_script/
 qrcode_assignment/site/*
 !qrcode_assignment/site/index.html
 !qrcode_assignment/site/index.template.html

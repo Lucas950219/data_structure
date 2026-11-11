@@ -1,6 +1,6 @@
 # QR Code 網址導引作業
 
-這個專案使用 Python 產生網址 QR Code、以 OpenCV 解碼驗證，並把正式網站部署到 GitHub Pages：`https://lucas950219.github.io/data_structure/qrcode.html`。GitHub Pages 是靜態主機；公開頁的簽到表單只存在訪客自己的瀏覽器，不會回傳到 repo。`serve` 則提供本機測試後端，會記錄本機 HTTP 連線並將簽到寫入 `data/checkins.json`。
+這個專案使用 Python 產生網址 QR Code、以 OpenCV 解碼驗證，並把正式網站部署到 GitHub Pages：`https://lucas950219.github.io/data_structure/qrcode.html`。GitHub Pages 是靜態主機；公開頁透過 Google Apps Script 將瀏覽及簽到紀錄寫入你的私人試算表。`serve` 則提供本機測試後端，會記錄本機 HTTP 連線並將簽到寫入 `data/checkins.json`。
 
 ## 環境需求
 
@@ -47,6 +47,12 @@ python qr_web.py serve --port 8000 --host-ip 192.168.1.23 --qr-url https://examp
 終端機會同時顯示本機測試網址與 QR Code 內容網址。掃描 QR Code 會開啟 GitHub Pages，因此網站上線前請先設定 repo 的 Pages Source 為 **GitHub Actions**。`site/index.html` 會在啟動時依設定更新。也可用 `--duration 20` 讓本機測試伺服器在 20 秒後自動關閉。
 
 正式頁面來源為 `site/index.template.html`；部署時會將 `site/index.html` 複製成 repo 網站根目錄的 `qrcode.html`。
+
+## 公開網站的集中紀錄
+
+`apps_script/Code.gs` 是 Google Apps Script 後端。依 `apps_script/README.md` 建立 Apps Script 網頁應用程式、執行一次 `setup()` 建立私人試算表，再把 `/exec` 網址填入 `config.json` 的 `backend_url`。使用 `qr_web.py serve` 重新產生 `site/index.html` 後，將更新推上 GitHub Pages。
+
+公開頁會送出瀏覽時間、頁面網址、瀏覽器 User-Agent 與簽到暱稱/留言；頁面會向訪客說明資料用途。此版本不收集 IP。若未設定 `backend_url`，公開頁簽到只會存在訪客自己的瀏覽器。
 
 ## 容錯等級比較（加分）
 

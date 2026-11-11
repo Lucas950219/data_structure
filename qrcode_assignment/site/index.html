@@ -59,6 +59,7 @@
     .checkin-form textarea { resize: vertical; }
     .checkin-form button { justify-self: start; }
     .checkin-status { min-height: 1.5em; margin: 0; color: var(--green-dark); font-size: .84rem; }
+    .privacy-note { margin: 18px 0 0; color: var(--muted); font-size: .82rem; }
     .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 20px; }
     button, .button-link { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 10px 18px; border: 0; border-radius: 999px; color: white; background: var(--green-dark); font: inherit; font-size: .9rem; font-weight: 800; text-decoration: none; cursor: pointer; }
     button:hover, .button-link:hover { background: var(--green); }
@@ -123,6 +124,7 @@
         <button type="submit">送出簽到</button>
         <p class="checkin-status" id="checkin-status" role="status" aria-live="polite"></p>
       </form>
+      <p class="privacy-note" id="privacy-note">目前沒有連接集中紀錄；此頁的簽到只保存在你自己的瀏覽器。</p>
       <div class="actions">
         <a class="button-link" href="https://lucas950219.github.io/data_structure/qrcode.html">開啟 GitHub Pages 網站</a>
         <button id="copy-link" type="button">複製正式網址</button>
@@ -146,9 +148,28 @@
     const copyButton = document.getElementById("copy-link");
     const copyStatus = document.getElementById("copy-status");
     const publicUrl = document.getElementById("public-url").href;
+    const backendUrl = "https://script.google.com/macros/s/AKfycbzsAoFd_nyToblSZRN_azzwB4AgYmwQozqwtodffOl4SMGcQw3p27nBTgVCfvV7IagS/exec";
+    const isPages = location.hostname.endsWith("github.io");
+    const useBackend = Boolean(backendUrl) && isPages;
     const checkinForm = document.getElementById("checkin-form");
     const checkinStatus = document.getElementById("checkin-status");
-    if (location.hostname.endsWith("github.io")) {
+    const privacyNote = document.getElementById("privacy-note");
+    function sendRecord(record) {
+      return fetch(backendUrl, {
+        method: "POST",
+        mode: "no-cors",
+        cache: "no-store",
+        keepalive: true,
+        body: new URLSearchParams({ payload: JSON.stringify(record) })
+      });
+    }
+    if (useBackend) {
+      privacyNote.textContent = "本頁會把瀏覽時間、網址與瀏覽器資訊，以及你送出的暱稱和留言，記錄在作業 Google 試算表；不收集 IP。";
+      sendRecord({ type: "visit", pageUrl: location.href, userAgent: navigator.userAgent }).catch(() => {});
+    } else if (!isPages) {
+      privacyNote.textContent = "本機測試伺服器會記錄連線時間、來源 IP、瀏覽器資訊及簽到內容。";
+    }
+    if (isPages) {
       checkinForm.addEventListener("submit", (event) => {
         event.preventDefault();
         const values = new FormData(checkinForm);
@@ -157,6 +178,18 @@
           name: String(values.get("name") || "").trim(),
           message: String(values.get("message") || "").trim()
         };
+        if (useBackend) {
+          checkinStatus.textContent = "正在送出簽到…";
+          sendRecord({ type: "checkin", pageUrl: location.href, userAgent: navigator.userAgent, ...entry })
+            .then(() => {
+              checkinStatus.textContent = "簽到請求已送出；請到作業試算表確認是否新增。";
+              checkinForm.reset();
+            })
+            .catch(() => {
+              checkinStatus.textContent = "送出失敗；請稍後再試。";
+            });
+          return;
+        }
         try {
           const key = "qrcode-assignment-checkins";
           const entries = JSON.parse(localStorage.getItem(key) || "[]");

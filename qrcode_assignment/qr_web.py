@@ -260,13 +260,14 @@ def detect_lan_ip() -> str:
         sock.close()
 
 
-def render_site(student_id: str, student_name: str) -> Path:
+def render_site(student_id: str, student_name: str, backend_url: str = "") -> Path:
     template_path = SITE_DIR / "index.template.html"
     if not template_path.is_file():
         raise FileNotFoundError(f"找不到網站樣板：{template_path}")
     template = template_path.read_text(encoding="utf-8")
     page = template.replace("{{STUDENT_ID}}", html.escape(student_id))
     page = page.replace("{{STUDENT_NAME}}", html.escape(student_name))
+    page = page.replace("{{BACKEND_URL}}", json.dumps(backend_url).replace("<", "\\u003c"))
     page_path = SITE_DIR / "index.html"
     page_path.write_text(page, encoding="utf-8")
     return page_path
@@ -297,7 +298,8 @@ def serve(args: argparse.Namespace, result: RunResult) -> None:
     port = int(args.port if args.port is not None else config.get("port", 8000))
     if args.duration < 0:
         raise ValueError("--duration 不可小於 0。")
-    page_path = render_site(student_id, student_name)
+    backend_url = str(config.get("backend_url", "")).strip()
+    page_path = render_site(student_id, student_name, backend_url)
     host_ip = args.host_ip or detect_lan_ip()
     if not 1 <= port <= 65535:
         raise ValueError("連接埠需介於 1 到 65535。")
