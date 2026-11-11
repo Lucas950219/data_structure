@@ -3,69 +3,51 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#10151d">
-  <title>員工候位管理｜好好候位</title>
-  <style>
-    * { box-sizing: border-box; }
-    html, body { width: 100%; min-height: 100%; margin: 0; background: #10151d; }
-    body { min-height: 100vh; }
-    #app-frame { display: block; width: 100%; min-height: 100vh; border: 0; background: #10151d; }
-    #launch-message { max-width: 640px; margin: 12vh auto; padding: 32px; color: #e8eef8; font: 16px/1.7 system-ui, sans-serif; }
-    #launch-message h1 { margin-top: 0; font-size: 26px; }
-    #launch-message code { color: #92c5ff; overflow-wrap: anywhere; }
-  </style>
+  <meta name="theme-color" content="#f6f4ef">
+  <meta name="description" content="員工候位管理與候位統計。">
+  <meta name="referrer" content="no-referrer">
+  <title>員工候位管理 — 好好候位</title>
+  <link rel="stylesheet" href="styles.css">
   <script src="config.js"></script>
 </head>
-<body>
-  <main id="launch-message" role="status"><h1>員工候位管理</h1><p>正在連線到 Google Apps Script…</p></main>
-  <iframe id="app-frame" title="員工候位管理" hidden></iframe>
-  <script>
-    (() => {
-      const config = window.WAITLIST_CONFIG || {};
-      const message = document.getElementById("launch-message");
-      const frame = document.getElementById("app-frame");
-      if (window.top !== window.self) {
-        message.innerHTML = "<h1>員工候位管理</h1><p>請直接開啟官方員工管理網址，不要將管理頁嵌入其他網站。</p>";
-        return;
-      }
-      const rawUrl = String(config.gasWebAppUrl || "").trim();
-      if (!rawUrl) {
-        message.innerHTML = "<h1>員工候位管理</h1><p>Apps Script 尚未部署或尚未設定網址。請完成部署後，在 GitHub Repository Variables 設定 <code>GAS_WEB_APP_URL</code>，再重新執行 Pages workflow。</p>";
-        return;
-      }
-      let appUrl;
-      try { appUrl = new URL(rawUrl); } catch {
-        message.innerHTML = "<h1>員工候位管理</h1><p>Apps Script 網址格式不正確，請檢查 GitHub 的 <code>GAS_WEB_APP_URL</code> 設定。</p>";
-        return;
-      }
-      if (appUrl.protocol !== "https:" || appUrl.hostname !== "script.google.com" || !appUrl.pathname.includes("/macros/s/") || !appUrl.pathname.endsWith("/exec")) {
-        message.innerHTML = "<h1>員工候位管理</h1><p>請使用 Apps Script Web App 的 HTTPS <code>/exec</code> 部署網址。</p>";
-        return;
-      }
-      appUrl.searchParams.set("view", "staff");
-      appUrl.hash = window.location.hash;
-      let appReady = false;
-      let handshakeTimeout = 0;
-      window.addEventListener("message", (event) => {
-        if (event.source !== frame.contentWindow) return;
-        if (!["https://script.google.com", "https://script.googleusercontent.com"].includes(event.origin)) return;
-        if (event.data?.type !== "waitlist-app-ready") return;
-        appReady = true;
-        window.clearTimeout(handshakeTimeout);
-        frame.hidden = false;
-        message.hidden = true;
-      });
-      frame.addEventListener("load", () => {
-        frame.contentWindow.postMessage({ type: "waitlist-parent-handshake" }, "*");
-        handshakeTimeout = window.setTimeout(() => {
-          if (appReady) return;
-          message.innerHTML = "<h1>員工頁尚未完成設定</h1><p>目前 Apps Script 回傳的不是候位介面。請將專案的 Code.gs、Customer、Staff、Styles、CustomerJS 和 StaffJS 檔案更新後，重新部署 Web App。</p>";
-          message.hidden = false;
-          frame.hidden = true;
-        }, 10000);
-      });
-      frame.src = appUrl.toString();
-    })();
-  </script>
+<body class="staff-page">
+  <div class="site-shell staff-shell">
+    <header class="site-header">
+      <a class="wordmark" href="waitlist.html" aria-label="好好候位首頁"><span class="wordmark-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M8 9h16M8 16h16M8 23h9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="23" cy="23" r="2.4" fill="currentColor"/></svg></span><span><strong>好好候位</strong><small>STAFF CONSOLE</small></span></a>
+      <div class="header-actions"><span class="staff-header-label">員工管理介面</span><a class="staff-link" href="waitlist.html">回到候位頁 <span aria-hidden="true">↗</span></a></div>
+    </header>
+
+    <main class="staff-main">
+      <section class="staff-intro"><p class="eyebrow">STAFF CONSOLE <span></span> 今日營運</p><h1>候位管理</h1><p>登入後查看候位資料、寄送通知並更新桌況。</p></section>
+
+      <section class="login-card" id="login-panel" aria-labelledby="login-heading">
+        <div class="login-art" aria-hidden="true"><span class="login-art-number">H</span><span class="login-art-caption">GOOD THINGS<br>TAKE TIME</span></div>
+        <div class="login-content"><p class="eyebrow">STAFF ONLY</p><h2 id="login-heading">員工登入</h2><p>請輸入管理密碼以查看候位清單。</p>
+          <form id="staff-login" novalidate><label class="field-label" for="staff-password">管理密碼</label><input class="text-input" id="staff-password" name="password" type="password" autocomplete="current-password" required placeholder="請輸入員工密碼"><p class="form-message" id="login-message" role="alert"></p><button class="primary-button" id="login-button" type="submit"><span>安全登入</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4"/></svg></button></form>
+          <p class="login-security"><span aria-hidden="true">▣</span> 密碼由後端驗證；錯誤密碼無法讀取候位資料。</p>
+        </div>
+      </section>
+
+      <section class="staff-dashboard" id="staff-dashboard" hidden aria-labelledby="dashboard-heading">
+        <div class="dashboard-heading"><div><p class="eyebrow">LIVE SERVICE</p><h2 id="dashboard-heading">今日候位總覽</h2></div><div class="dashboard-actions"><span class="last-updated" id="staff-updated">更新中…</span><button class="secondary-button logout-button" id="logout-button" type="button">登出</button></div></div>
+        <div class="staff-stats" aria-label="今日候位統計">
+          <article class="staff-stat"><span>今日候位總數</span><strong id="stat-total">0</strong><small>組客人</small></article>
+          <article class="staff-stat"><span>目前等候中</span><strong id="stat-active">0</strong><small>組客人</small></article>
+          <article class="staff-stat"><span>平均等候時間</span><strong id="stat-average">—</strong><small>分鐘</small></article>
+          <article class="staff-stat stat-abandon"><span>放棄率</span><strong id="stat-abandonment">0%</strong><small id="stat-cancelled">今日取消 0 組</small></article>
+        </div>
+        <div class="queue-board panel-card">
+          <div class="board-heading"><div><p class="eyebrow">ACTIVE QUEUE</p><h2>候位 Queue <span class="board-count" id="staff-queue-count">0</span></h2></div><div class="lane-filters" role="group" aria-label="依桌型篩選"><button class="lane-filter is-active" data-lane="all" type="button" aria-pressed="true">全部桌型</button><button class="lane-filter" data-lane="2p" type="button" aria-pressed="false">2 人桌</button><button class="lane-filter" data-lane="4p" type="button" aria-pressed="false">4 人桌</button></div></div>
+          <div class="table-wrap"><table class="queue-table"><thead><tr><th>候位號碼</th><th>姓名 / 性別</th><th>人數 / 桌型</th><th>E-mail</th><th>候位時間</th><th>狀態</th><th><span class="visually-hidden">操作</span></th></tr></thead><tbody id="staff-queue-body"></tbody></table><div class="staff-empty" id="staff-empty" hidden><span aria-hidden="true">✳</span><strong>目前沒有候位客人</strong><p>有新客人加入後，資料會自動出現在這裡。</p></div></div>
+        </div>
+        <p class="staff-data-note">候位資料定時更新 · 狀態變更與統計由後端保存</p>
+      </section>
+      <p class="staff-page-error" id="staff-page-error" role="alert"></p>
+    </main>
+    <footer class="site-footer staff-footer"><span>好好候位 · 員工管理介面</span><a href="waitlist.html">前往顧客候位頁</a></footer>
+  </div>
+  <div class="toast-region" id="staff-toast" role="status" aria-live="polite"></div>
+  <script src="api.js" defer></script>
+  <script src="staff.js" defer></script>
 </body>
 </html>

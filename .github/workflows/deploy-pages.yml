@@ -38,7 +38,8 @@ jobs:
           cp waitlist_project/waitlist.html _site/waitlist.html
           cp waitlist_project/staff.html _site/staff.html
           cp waitlist_project/styles.css _site/styles.css
-          cp waitlist_project/customer.js _site/customer.js
+          cp waitlist_project/api.js _site/api.js
+          cp waitlist_project/app.js _site/app.js
           cp waitlist_project/staff.js _site/staff.js
           cp waitlist_project/assets/waitlist-qr.png _site/assets/waitlist-qr.png
           python3 - <<'PY'

@@ -3,69 +3,90 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#10151d">
-  <title>好好候位｜線上候位</title>
-  <style>
-    * { box-sizing: border-box; }
-    html, body { width: 100%; min-height: 100%; margin: 0; background: #10151d; }
-    body { min-height: 100vh; }
-    #app-frame { display: block; width: 100%; min-height: 100vh; border: 0; background: #10151d; }
-    #launch-message { max-width: 640px; margin: 12vh auto; padding: 32px; color: #e8eef8; font: 16px/1.7 system-ui, sans-serif; }
-    #launch-message h1 { margin-top: 0; font-size: 26px; }
-    #launch-message code { color: #92c5ff; overflow-wrap: anywhere; }
-  </style>
+  <meta name="theme-color" content="#f6f4ef">
+  <meta name="description" content="線上餐廳候位服務：掃描 QR Code、登記候位並查看即時進度。">
+  <meta name="referrer" content="no-referrer">
+  <title>好好候位 — 線上候位</title>
+  <link rel="stylesheet" href="styles.css">
   <script src="config.js"></script>
 </head>
-<body>
-  <main id="launch-message" role="status"><h1>線上候位</h1><p>正在連線到 Google Apps Script…</p></main>
-  <iframe id="app-frame" title="線上候位" hidden></iframe>
-  <script>
-    (() => {
-      const config = window.WAITLIST_CONFIG || {};
-      const message = document.getElementById("launch-message");
-      const frame = document.getElementById("app-frame");
-      if (window.top !== window.self) {
-        message.innerHTML = "<h1>線上候位</h1><p>請直接開啟官方候位網址，不要將候位頁嵌入其他網站。</p>";
-        return;
-      }
-      const rawUrl = String(config.gasWebAppUrl || "").trim();
-      if (!rawUrl) {
-        message.innerHTML = "<h1>線上候位</h1><p>Apps Script 尚未部署或尚未設定網址。請完成部署後，在 GitHub Repository Variables 設定 <code>GAS_WEB_APP_URL</code>，再重新執行 Pages workflow。</p>";
-        return;
-      }
-      let appUrl;
-      try { appUrl = new URL(rawUrl); } catch {
-        message.innerHTML = "<h1>線上候位</h1><p>Apps Script 網址格式不正確，請檢查 GitHub 的 <code>GAS_WEB_APP_URL</code> 設定。</p>";
-        return;
-      }
-      if (appUrl.protocol !== "https:" || appUrl.hostname !== "script.google.com" || !appUrl.pathname.includes("/macros/s/") || !appUrl.pathname.endsWith("/exec")) {
-        message.innerHTML = "<h1>線上候位</h1><p>請使用 Apps Script Web App 的 HTTPS <code>/exec</code> 部署網址。</p>";
-        return;
-      }
-      appUrl.searchParams.set("view", "customer");
-      appUrl.hash = window.location.hash;
-      let appReady = false;
-      let handshakeTimeout = 0;
-      window.addEventListener("message", (event) => {
-        if (event.source !== frame.contentWindow) return;
-        if (!["https://script.google.com", "https://script.googleusercontent.com"].includes(event.origin)) return;
-        if (event.data?.type !== "waitlist-app-ready") return;
-        appReady = true;
-        window.clearTimeout(handshakeTimeout);
-        frame.hidden = false;
-        message.hidden = true;
-      });
-      frame.addEventListener("load", () => {
-        frame.contentWindow.postMessage({ type: "waitlist-parent-handshake" }, "*");
-        handshakeTimeout = window.setTimeout(() => {
-          if (appReady) return;
-          message.innerHTML = "<h1>線上候位尚未完成設定</h1><p>目前 Apps Script 回傳的不是候位介面。請將專案的 Code.gs、Customer、Staff、Styles、CustomerJS 和 StaffJS 檔案更新後，重新部署 Web App。</p>";
-          message.hidden = false;
-          frame.hidden = true;
-        }, 10000);
-      });
-      frame.src = appUrl.toString();
-    })();
-  </script>
+<body class="customer-page">
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="wordmark" href="waitlist.html" aria-label="好好候位首頁">
+        <span class="wordmark-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M8 9h16M8 16h16M8 23h9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="23" cy="23" r="2.4" fill="currentColor"/></svg></span>
+        <span><strong>好好候位</strong><small>TABLE WAITLIST</small></span>
+      </a>
+      <div class="header-actions"><span class="open-label"><i></i> 線上候位開放中</span><a class="staff-link" href="staff.html">員工登入 <span aria-hidden="true">↗</span></a></div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow">A LITTLE LESS WAITING</p>
+          <h1 id="hero-title">把等待留給<br><em>好好期待。</em></h1>
+          <p class="hero-description">先加入候位，隨時查看前方還有幾組。輪到您時，我們會寄送 E-mail 通知。</p>
+          <a class="hero-cta" href="#join-form">開始候位 <span aria-hidden="true">↓</span></a>
+        </div>
+        <aside class="queue-summary" aria-labelledby="summary-title">
+          <div class="summary-heading"><div><p class="eyebrow">LIVE QUEUE</p><h2 id="summary-title">目前候位狀況</h2></div><span class="live-pulse" aria-label="每五秒更新一次"><i></i> LIVE</span></div>
+          <div class="lane-summary">
+            <article class="lane-card lane-two"><span class="lane-icon" aria-hidden="true">02</span><div><strong>2 人桌</strong><span><b id="lane-2-count">—</b> 組候位中</span></div><span class="lane-arrow" aria-hidden="true">↗</span></article>
+            <article class="lane-card lane-four"><span class="lane-icon" aria-hidden="true">04</span><div><strong>4 人桌</strong><span><b id="lane-4-count">—</b> 組候位中</span></div><span class="lane-arrow" aria-hidden="true">↗</span></article>
+          </div>
+          <div class="summary-foot"><span>全場候位</span><strong id="total-queue-count">— <small>組</small></strong></div>
+          <p class="summary-update" id="summary-update" role="status">正在更新候位狀況…</p>
+        </aside>
+      </section>
+
+      <section class="customer-content" aria-label="線上候位服務">
+        <div class="join-column">
+          <div class="section-heading"><span class="section-number">01</span><div><p class="eyebrow">JOIN THE QUEUE</p><h2>加入候位</h2></div></div>
+          <form class="form-card" id="join-form" novalidate>
+            <div class="form-intro"><strong>填寫資料，取得您的候位號碼。</strong><span>欄位皆為必填，候位資料不會公開顯示。</span></div>
+            <label class="field-label" for="guest-name">姓名</label>
+            <input class="text-input" id="guest-name" name="name" type="text" maxlength="60" autocomplete="name" placeholder="請輸入姓名" required>
+            <div class="field-grid">
+              <div><label class="field-label" for="guest-gender">性別</label><select class="text-input" id="guest-gender" name="gender" required><option value="" selected disabled>請選擇</option><option value="女">女性</option><option value="男">男性</option><option value="其他">其他</option><option value="不透露">不透露</option></select></div>
+              <div><label class="field-label" for="guest-size">用餐人數</label><select class="text-input" id="guest-size" name="partySize" required><option value="2" selected>2 位</option><option value="1">1 位</option><option value="3">3 位</option><option value="4">4 位</option></select></div>
+            </div>
+            <label class="field-label" for="guest-email">E-mail</label>
+            <input class="text-input" id="guest-email" name="email" type="email" maxlength="254" autocomplete="email" inputmode="email" placeholder="name@example.com" required>
+            <label class="consent-row"><input id="guest-consent" name="consent" type="checkbox" required><span>我同意使用上述資料處理候位與通知，並了解資料僅供本次候位服務使用。</span></label>
+            <p class="form-message" id="join-message" role="alert"></p>
+            <button class="primary-button" id="join-button" type="submit"><span>取得候位號碼</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4"/></svg></button>
+            <p class="data-note"><span aria-hidden="true">✳</span> 您的 E-mail 只會提供給員工處理候位。</p>
+          </form>
+
+          <article class="ticket-card" id="ticket-card" hidden aria-live="polite" aria-labelledby="ticket-heading">
+            <div class="ticket-card-top"><span class="ticket-overline">YOUR PLACE IN LINE</span><span class="ticket-status" id="ticket-status">候位中</span></div>
+            <h3 id="ticket-heading">您的候位號碼</h3>
+            <div class="ticket-number" id="ticket-number">—</div>
+            <p class="ticket-lane" id="ticket-lane">—</p>
+            <div class="ticket-metrics"><div><span>目前本桌型候位</span><strong id="ticket-queue-size">— 組</strong></div><div><span>前方等候組數</span><strong id="ticket-ahead">— 組</strong></div></div>
+            <p class="ticket-wait" id="ticket-wait">正在更新您的候位狀態…</p>
+            <button class="secondary-button cancel-ticket-button" id="cancel-ticket" type="button">取消我的候位</button>
+            <p class="ticket-help">此頁會自動更新。您也可以使用本頁連結在同一裝置查看進度。</p>
+          </article>
+        </div>
+
+        <aside class="info-column">
+          <section class="how-card">
+            <div class="section-heading section-heading-compact"><span class="section-number">02</span><div><p class="eyebrow">HOW IT WORKS</p><h2>候位小提醒</h2></div></div>
+            <ol class="steps-list"><li><span>1</span><div><strong>填寫候位資料</strong><p>選擇用餐人數，系統會自動安排桌型。</p></div></li><li><span>2</span><div><strong>即時查看進度</strong><p>加入後可查看同桌型候位組數與前方組數。</p></div></li><li><span>3</span><div><strong>收到 E-mail 通知</strong><p>輪到您時，請留意信箱並前往櫃檯。</p></div></li></ol>
+          </section>
+          <section class="qr-card" aria-labelledby="qr-heading">
+            <div class="qr-copy"><p class="eyebrow">SCAN TO JOIN</p><h2 id="qr-heading">分享候位頁</h2><p>將 QR Code 放在店門口，讓客人用手機快速加入候位。</p><a class="download-link" href="assets/waitlist-qr.png" download="waitlist-qr.png">下載 QR Code <span aria-hidden="true">↓</span></a></div>
+            <img class="qr-image" src="assets/waitlist-qr.png" width="126" height="126" alt="掃描以開啟線上候位頁面的 QR Code">
+          </section>
+          <p class="privacy-caption">候位資料由餐廳員工管理，僅顯示候位號碼和桌型的公開進度。</p>
+        </aside>
+      </section>
+    </main>
+
+    <footer class="site-footer"><a class="wordmark footer-mark" href="waitlist.html"><span class="wordmark-icon" aria-hidden="true">好</span><span><strong>好好候位</strong><small>WAIT LESS, ENJOY MORE</small></span></a><span>若已不需候位，請使用候位進度卡取消，或透過通知信中的連結取消。</span></footer>
+  </div>
+  <script src="api.js" defer></script>
+  <script src="app.js" defer></script>
 </body>
 </html>

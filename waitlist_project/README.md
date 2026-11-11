@@ -1,46 +1,30 @@
 # 好好候位
 
-顧客候位與員工管理系統。顧客頁與員工頁由 GitHub Pages 提供入口，互動介面和後端由 Google Apps Script Web App 執行，Queue 資料保存在私有 Google 試算表。Apps Script 透過 google.script.run 呼叫伺服器函式，避免從 GitHub Pages 直接跨網域呼叫 Apps Script API。
+顧客與員工介面由 GitHub Pages 提供；Google Apps Script 處理候位、員工登入及 Gmail 通知，Queue 資料存放在私人 Google 試算表。
 
-## 公開頁面
+- 顧客頁：https://lucas950219.github.io/data_structure/waitlist.html
+- 員工頁：https://lucas950219.github.io/data_structure/staff.html
+- QR Code：`assets/waitlist-qr.png`
 
-- 顧客候位頁：https://lucas950219.github.io/data_structure/waitlist.html
-- 員工管理頁：https://lucas950219.github.io/data_structure/staff.html
-- 顧客 QR 圖：assets/waitlist-qr.png
+GitHub Pages 發布 `waitlist.html`、`staff.html`、`styles.css`、`app.js`、`staff.js`、`api.js` 與 `config.js`。`index.html` 會導向顧客頁；頁面透過 Apps Script Web App 與後端通訊。`apps_script` 裡的其他 HTML 檔是舊版備份；目前只需把 `Code.gs` 貼到 Apps Script。
 
-GitHub Pages 使用外層入口頁載入 Apps Script Web App。將 Web App 的 HTTPS /exec 網址設在 config.js 的 gasWebAppUrl，或設定 GitHub repository variable GAS_WEB_APP_URL（後者優先），然後重新執行 Pages workflow。若還沒設定，入口頁會顯示部署說明。因為 Web App 需要被 Pages iframe 載入，頁面會驗證來自官方 GitHub Pages 網域的 handshake，並拒絕其他網站嵌入。
+## 設定 Google Apps Script
 
-## Apps Script 部署
+1. 開啟自己的 Apps Script 專案，將 `apps_script/Code.gs` 全部內容貼進 `Code.gs` 並儲存。
+2. 在上方函式選單選擇 `setupWaitlist`，按執行並授權，建立私人 Queue 試算表與簽章金鑰。
+3. 選擇 `authorizeGmail`，執行並依畫面授權寄信；通知會由部署者的 Google 帳號寄出。
+4. 到「專案設定」的「指令碼屬性」新增：
+   - `STAFF_PASSWORD`：自行設定的員工密碼。
+   - `PUBLIC_SITE_URL`：`https://lucas950219.github.io/data_structure/waitlist.html`。
+   - `WAIT_MIN_PER_GROUP`：每組預估等待分鐘，例如 `10`。
+5. 在「部署 → 管理部署作業」編輯現有網頁應用程式，版本選「新版本」並部署；執行身分選「我」，存取權選「所有人」。若尚未部署，先新增網頁應用程式部署。每次修改程式後都要更新部署版本。
+6. 開啟部署網址並加上 `?action=count`。初始化成功時會看到 `{"waiting":0}`（若已有候位，數字會不同）。還需要使用顧客及員工頁確認完整流程。
 
-原始碼位於 apps_script/，.clasp.json 已指向作業提供的 Script ID。
+目前 `config.js` 已填入提供的 `/exec` 網址。若更新部署後網址改變，更新 `config.js` 或 GitHub repository variable `GAS_WEB_APP_URL`（後者優先），再重新發布 Pages。
 
-1. 安裝 clasp 並登入：npm install -g @google/clasp，接著 clasp login。
-2. 在 repo 根目錄執行 cd waitlist_project/apps_script，再執行 clasp push，把這個目錄同步到指定 Apps Script 專案。
-3. 開啟老師提供的 Apps Script 專案，在編輯器選取並執行 setupWaitlist_，授權建立私有 Queue 試算表；再執行 authorizeGmail_ 並授權寄信。執行記錄會列出試算表網址與 Gmail 授權狀態。
-4. 開啟「專案設定 → 指令碼屬性」，新增：
-   - STAFF_PASSWORD：自行設定的員工密碼。
-   - PUBLIC_SITE_URL：https://lucas950219.github.io/data_structure/waitlist.html
-   - WAIT_MIN_PER_GROUP：例如 10。
-   TOKEN_SECRET 與 WAITLIST_SHEET_ID 會由初始化函式建立，不要公開或刪除。
-5. 選「部署 → 新增部署作業 → 網頁應用程式」：執行身分選「我」，存取權選「所有人」，部署並完成 Google Sheets 與 Gmail 授權。複製產生的 HTTPS /exec 網址。
-6. 到 GitHub repo「Settings → Secrets and variables → Actions → Variables」新增 GAS_WEB_APP_URL，值填剛才的 /exec 網址；再到「Actions → Deploy to GitHub Pages → Run workflow」發布入口頁。
+## 補充
 
-### Gmail 通知
-
-Apps Script 使用 MailApp.sendEmail 從部署者的 Google 帳號寄信，並只要求寄信權限。第一次部署前執行 authorizeGmail_ 完成授權；雲端版不需要把 gmail_assignment/config.json 的 App Password 放進程式碼或 GitHub。config.json 仍可供原本的 Python Gmail 作業使用。
-
-### 資料與安全
-
-- Queue 試算表由初始化函式建立，預設保持私人，不要公開分享。
-- 員工密碼只放在 Apps Script 指令碼屬性，不放在 Git。
-- 公開摘要只回傳人數；個人資料須使用員工登入 token 才會回傳。顧客進度與取消使用簽章 token。
-- 顧客 1–2 位進入 2 人桌 Queue，3–4 位進入 4 人桌 Queue；號碼按日期和桌型分開，不限制 50 組。
-- 通知成功後才更新成「已通知」；取消、入座等歷史資料會留在試算表供統計。
-
-## F1–F11
-
-詳細功能對照與待完成的實機驗收見 FEATURES.md。
-
-## Python 本機版本
-
-server.py 保留為原本的本機測試 API，使用標準函式庫與 SQLite；正式雲端入口使用上方 Apps Script 專案。QR 產生沿用 qrcode_assignment/qr_web.py，Python Gmail helper 保留給既有 Gmail 作業使用。
+- `STAFF_PASSWORD` 留在 Apps Script 指令碼屬性，請勿放入 GitHub。雲端版使用 `MailApp`，不需上傳 Gmail App Password。
+- 員工登入及操作由後端驗證；顧客以簽章 token 查詢或取消自己的候位。
+- 1–2 位和 3–4 位分別進入 2 人桌、4 人桌的 Queue。F1–F11 對照見 `FEATURES.md`。
+- 部署後需用手機掃 QR Code，並檢查加入、錯誤密碼、寄信、入座、取消與統計。

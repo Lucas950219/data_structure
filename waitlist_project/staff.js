@@ -1,6 +1,5 @@
 (() => {
   const config = window.WAITLIST_CONFIG || {};
-  const apiBase = String(config.apiBaseUrl || "").replace(/\/$/, "");
   const pollInterval = Math.max(3000, Number(config.pollIntervalMs) || 5000);
   const TOKEN_KEY = "waitlist.staffSession";
   const loginPanel = document.getElementById("login-panel");
@@ -33,52 +32,12 @@
   }
 
   async function request(path, options = {}) {
-    if (typeof google !== "undefined" && google.script && google.script.run) {
-      return new Promise((resolve, reject) => {
-        google.script.run
-          .withSuccessHandler((result) => {
-            if (!result || result.ok !== true) {
-              const error = new Error(result?.message || "請求失敗，請稍後再試。");
-              error.status = result?.status || 500;
-              error.code = result?.error || "server_error";
-              reject(error);
-              return;
-            }
-            resolve(result.data);
-          })
-          .withFailureHandler((error) => reject(new Error(error?.message || "Apps Script 連線失敗。")))
-          .apiRpc({
-            path,
-            method: options.method || "GET",
-            body: options.body || {},
-            authorization: options.auth === false ? "" : (token ? `Bearer ${token}` : ""),
-          });
-      });
-    }
-    if (!apiBase) throw new Error("後端 API 網址尚未設定，請先完成部署設定。");
-    let response;
-    try {
-      response = await fetch(`${apiBase}${path}`, {
-        method: options.method || "GET",
-        headers: {
-          ...(options.body ? { "Content-Type": "application/json" } : {}),
-          ...(options.auth !== false && token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: options.body ? JSON.stringify(options.body) : undefined,
-        cache: "no-store",
-      });
-    } catch {
-      throw new Error("無法連接候位後端，請確認服務是否啟動。");
-    }
-    let payload = {};
-    try { payload = await response.json(); } catch { /* Report a useful fallback below. */ }
-    if (!response.ok) {
-      const error = new Error(payload.message || "請求未完成，請稍後重試。");
-      error.status = response.status;
-      error.code = payload.error;
-      throw error;
-    }
-    return payload;
+    return window.waitlistRpc({
+      path,
+      method: options.method || "GET",
+      body: options.body || {},
+      authorization: options.auth === false ? "" : (token ? `Bearer ${token}` : ""),
+    });
   }
 
   function toast(message, isError = false) {

@@ -1,6 +1,5 @@
 (() => {
   const config = window.WAITLIST_CONFIG || {};
-  const apiBase = String(config.apiBaseUrl || "").replace(/\/$/, "");
   const pollInterval = Math.max(3000, Number(config.pollIntervalMs) || 5000);
   const TOKEN_KEY = "waitlist.customerAccessToken";
   const form = document.getElementById("join-form");
@@ -21,44 +20,12 @@
   }
 
   async function request(path, options = {}) {
-    if (typeof google !== "undefined" && google.script && google.script.run) {
-      return new Promise((resolve, reject) => {
-        google.script.run
-          .withSuccessHandler((result) => {
-            if (!result || result.ok !== true) {
-              const error = new Error(result?.message || "請求失敗，請稍後再試。");
-              error.status = result?.status || 500;
-              error.code = result?.error || "server_error";
-              reject(error);
-              return;
-            }
-            resolve(result.data);
-          })
-          .withFailureHandler((error) => reject(new Error(error?.message || "Apps Script 連線失敗。")))
-          .apiRpc({
-            path,
-            method: options.method || "GET",
-            body: options.body || {},
-            authorization: options.headers?.Authorization || "",
-          });
-      });
-    }
-    if (!apiBase) throw new Error("候位服務尚未設定 API 網址，請稍後再試。");
-    let response;
-    try {
-      response = await fetch(`${apiBase}${path}`, {
-        method: options.method || "GET",
-        headers: { ...(options.body ? { "Content-Type": "application/json" } : {}), ...(options.headers || {}) },
-        body: options.body ? JSON.stringify(options.body) : undefined,
-        cache: "no-store",
-      });
-    } catch {
-      throw new Error("目前無法連接候位服務，請確認網路後重試。");
-    }
-    let payload = {};
-    try { payload = await response.json(); } catch { /* A non-JSON response is handled below. */ }
-    if (!response.ok) throw new Error(payload.message || "請求未完成，請稍後再試。");
-    return payload;
+    return window.waitlistRpc({
+      path,
+      method: options.method || "GET",
+      body: options.body || {},
+      authorization: options.headers?.Authorization || "",
+    });
   }
 
   function showMessage(message, kind = "error") {

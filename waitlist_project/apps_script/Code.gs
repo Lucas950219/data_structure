@@ -6,18 +6,66 @@ const QUEUE_HEADERS = [
 ];
 const ACTIVE_STATUSES = ['waiting', 'notifying', 'notified'];
 
+/** Public health/count endpoint. Example: /exec?action=count -> {"waiting":0}. */
 function doGet(e) {
-  const view = e && e.parameter && e.parameter.view === 'staff' ? 'Staff' : 'Customer';
-  const title = view === 'Staff' ? '員工候位管理｜好好候位' : '好好候位｜線上候位';
-  return HtmlService.createTemplateFromFile(view)
-    .evaluate()
-    .setTitle(title)
+  const action = String((e && e.parameter && e.parameter.action) || '');
+  if (action === 'count') {
+    const summary = queueSummary_();
+    return ContentService.createTextOutput(JSON.stringify({ waiting: summary.queueSize }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  return ContentService.createTextOutput(JSON.stringify({
+    service: 'waitlist',
+    message: 'Use the GitHub Pages customer and staff pages. For the status check, add ?action=count.'
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * GitHub Pages cannot call google.script.run. The static pages submit a normal
+ * HTML form to this endpoint, then receive the result through postMessage from
+ * this small iframe response. This avoids browser CORS/preflight restrictions.
+ */
+function doPost(e) {
+  const parameters = (e && e.parameter) || {};
+  const requestId = String(parameters.requestId || '');
+  let result;
+  try {
+    if (!/^[a-zA-Z0-9_-]{1,80}$/.test(requestId)) {
+      throw apiError_(400, 'invalid_request_id', '請重新載入頁面後再試。');
+    }
+    const request = JSON.parse(String(parameters.request || '{}'));
+    result = apiRpc(request);
+  } catch (error) {
+    result = {
+      ok: false,
+      status: Number(error.httpStatus) || 400,
+      error: error.code || 'invalid_request',
+      message: error.message || '請求格式錯誤，請稍後再試。'
+    };
+  }
+  return HtmlService.createHtmlOutput(rpcResponseHtml_(requestId, result))
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function include_(fileName) {
-  return HtmlService.createHtmlOutputFromFile(fileName).getContent();
+function rpcResponseHtml_(requestId, result) {
+  const pageOrigin = getPublicOrigin_();
+  const message = JSON.stringify({ type: 'waitlist-rpc-result', requestId, result })
+    .replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+  return '<!doctype html><html><body><script>window.top.postMessage(' + message + ',' +
+    JSON.stringify(pageOrigin) + ');</script></body></html>';
 }
+
+function getPublicOrigin_() {
+  const configured = PropertiesService.getScriptProperties().getProperty('PUBLIC_SITE_URL') ||
+    'https://lucas950219.github.io/data_structure/waitlist.html';
+  const match = configured.match(/^https:\/\/([a-z0-9.-]+)(?::\d+)?/i);
+  if (!match) throw apiError_(503, 'public_site_url_invalid', '請在 Apps Script 設定正確的 PUBLIC_SITE_URL。');
+  return 'https://' + match[1];
+}
+
+/** Choose these public setup functions in the Apps Script editor. */
+function setupWaitlist() { return setupWaitlist_(); }
+function authorizeGmail() { return authorizeGmail_(); }
 
 /** Run once from the Apps Script editor. It creates the private queue spreadsheet and signing key. */
 function setupWaitlist_() {
