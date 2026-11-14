@@ -1,6 +1,6 @@
 const SPREADSHEET_ID_PROPERTY = "QRCODE_LOG_SPREADSHEET_ID";
 const LOG_SHEET_NAME = "訪客紀錄";
-const LOG_HEADERS = ["伺服器時間", "事件", "頁面網址", "瀏覽器", "姓名", "留言"];
+const LOG_HEADERS = ["伺服器時間", "事件", "頁面網址", "瀏覽器", "姓名", "留言", "來源 IP"];
 
 /** Run once from the Apps Script editor and authorize the new private Sheet. */
 function setup() {
@@ -25,7 +25,7 @@ function setup() {
 
 /** Health endpoint. It does not write a row. */
 function doGet() {
-  return jsonOutput_({ ok: true, service: "qrcode-assignment-log" });
+  return jsonOutput_({ ok: true, service: "qrcode-assignment-log", ipLogging: true });
 }
 
 /** Accept page-view and check-in records from the public GitHub Pages page. */
@@ -45,17 +45,24 @@ function doPost(event) {
       safeCell_(payload.pageUrl, 500),
       safeCell_(payload.userAgent, 300),
       payload.type === "checkin" ? safeCell_(payload.name, 50) : "",
-      payload.type === "checkin" ? safeCell_(payload.message, 300) : ""
+      payload.type === "checkin" ? safeCell_(payload.message, 300) : "",
+      safeCell_(payload.clientIp, 64)
     ];
 
     const lock = LockService.getScriptLock();
     lock.waitLock(10000);
     try {
-      getLogSheet_().appendRow(row);
+      const sheet = getLogSheet_();
+      const ipHeader = sheet.getRange(1, 7).getValue();
+      if (ipHeader && ipHeader !== LOG_HEADERS[6]) {
+        throw new Error("第七欄已經有其他標題，請先檢查試算表。");
+      }
+      if (!ipHeader) sheet.getRange(1, 7).setValue(LOG_HEADERS[6]);
+      sheet.appendRow(row);
     } finally {
       lock.releaseLock();
     }
-    return jsonOutput_({ ok: true });
+    return jsonOutput_({ ok: true, ipLogging: true });
   } catch (error) {
     return jsonOutput_({ ok: false, error: String(error && error.message || error) });
   }

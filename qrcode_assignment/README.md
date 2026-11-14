@@ -50,9 +50,9 @@ python qr_web.py serve --port 8000 --host-ip 192.168.1.23 --qr-url https://examp
 
 ## 公開網站的集中紀錄
 
-`apps_script/Code.gs` 是 Google Apps Script 後端。依 `apps_script/README.md` 建立 Apps Script 網頁應用程式、執行一次 `setup()` 建立私人試算表，再把 `/exec` 網址填入 `config.json` 的 `backend_url`。使用 `qr_web.py serve` 重新產生 `site/index.html` 後，將更新推上 GitHub Pages。
+`apps_script/Code.gs` 是 Google Apps Script 後端；`apps_script/cloudflare-worker.js` 接收公網 IP 並轉交後端。依 `apps_script/README.md` 部署兩者，再把 Worker 網址填入 `config.json` 的 `backend_url`。使用 `qr_web.py serve` 重新產生 `site/index.html` 後，將更新推上 GitHub Pages。
 
-公開頁會送出瀏覽時間、頁面網址、瀏覽器 User-Agent 與簽到暱稱/留言；頁面會向訪客說明資料用途。此版本不收集 IP。若未設定 `backend_url`，公開頁簽到只會存在訪客自己的瀏覽器。
+完成部署後，公開頁會記錄瀏覽時間、頁面網址、瀏覽器 User-Agent、公網 IP 與簽到暱稱/留言；頁面會向訪客說明資料用途。若未設定 `backend_url`，公開頁簽到只會存在訪客自己的瀏覽器。
 
 ## 容錯等級比較（加分）
 
@@ -68,7 +68,7 @@ python qr_web.py compare --url https://www.google.com
 .\.venv\Scripts\python.exe tests\test_feature_matrix.py
 ```
 
-測試 F1、F3、F5、F6、F7、F8，並以公開網址檢查 F4 的 GitHub Pages 部署。F5 的時間、IP、路徑與瀏覽器紀錄，以及伺服器端簽到，需在本機 `serve` 中驗證；靜態 Pages 不提供這類伺服器紀錄。F2 與 F6/F7 的手機相機可讀性仍需實機驗證，請依 `feature_check.md` 記錄結果。
+測試 F1、F3、F5、F6、F7、F8，並以公開網址檢查 F4 的 GitHub Pages 部署。此測試中的 F5 紀錄與伺服器端簽到使用本機 `serve` 驗證；公開頁的 Cloudflare 與試算表紀錄需要部署後另外驗證。F2 與 F6/F7 的手機相機可讀性仍需實機驗證，請依 `feature_check.md` 記錄結果。
 
 ## 目錄
 

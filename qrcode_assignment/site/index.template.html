@@ -157,14 +157,17 @@
     function sendRecord(record) {
       return fetch(backendUrl, {
         method: "POST",
-        mode: "no-cors",
         cache: "no-store",
         keepalive: true,
         body: new URLSearchParams({ payload: JSON.stringify(record) })
+      }).then(async (response) => {
+        const result = await response.json();
+        if (!response.ok || !result.ok) throw new Error("Record failed");
+        return result;
       });
     }
     if (useBackend) {
-      privacyNote.textContent = "本頁會把瀏覽時間、網址與瀏覽器資訊，以及你送出的暱稱和留言，記錄在作業 Google 試算表；不收集 IP。";
+      privacyNote.textContent = "本頁會記錄瀏覽時間、網址、瀏覽器資訊和公網 IP，以及你送出的暱稱和留言；資料經 Cloudflare 傳送至作業 Google 試算表。";
       sendRecord({ type: "visit", pageUrl: location.href, userAgent: navigator.userAgent }).catch(() => {});
     } else if (!isPages) {
       privacyNote.textContent = "本機測試伺服器會記錄連線時間、來源 IP、瀏覽器資訊及簽到內容。";
@@ -182,7 +185,7 @@
           checkinStatus.textContent = "正在送出簽到…";
           sendRecord({ type: "checkin", pageUrl: location.href, userAgent: navigator.userAgent, ...entry })
             .then(() => {
-              checkinStatus.textContent = "簽到請求已送出；請到作業試算表確認是否新增。";
+              checkinStatus.textContent = "簽到已記錄到作業試算表。";
               checkinForm.reset();
             })
             .catch(() => {
