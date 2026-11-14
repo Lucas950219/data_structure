@@ -50,6 +50,22 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
   }
+  if (action === 'reset') {
+    try {
+      const expected = PropertiesService.getScriptProperties().getProperty('STAFF_PASSWORD') || '';
+      if (!expected || !constantTimeEquals_(String(params.key || ''), expected)) {
+        throw apiError_(401, 'invalid_password', '員工密碼錯誤或尚未設定。');
+      }
+      if (String(params.confirm || '') !== 'RESET') {
+        throw apiError_(400, 'confirmation_required', '清空資料不可復原；作業結束並確認不再需要資料後，加入 confirm=RESET 才會執行。');
+      }
+      return ContentService.createTextOutput(JSON.stringify(resetQueue_()))
+        .setMimeType(ContentService.MimeType.JSON);
+    } catch (error) {
+      return ContentService.createTextOutput(JSON.stringify({ error: error.code || 'reset_error', message: error.message }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
   return ContentService.createTextOutput(JSON.stringify({
     service: 'waitlist',
     message: 'Use the GitHub Pages customer and staff pages. For the status check, add ?action=count.'
@@ -69,6 +85,24 @@ function activityLog_() {
   const counts = { join: 0, notify: 0, seat: 0, cancel: 0 };
   events.forEach(event => { counts[event.action]++; });
   return { counts, events };
+}
+
+/** Permanently clear the queue and event history only after explicit confirmation. */
+function resetQueue_() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const entries = getEntries_();
+    if (entries.some(entry => entry.status === 'notifying')) {
+      throw apiError_(409, 'notification_pending', '通知郵件正在寄送，請稍後再清空。');
+    }
+    const sheet = getQueueSheet_();
+    const lastRow = sheet.getLastRow();
+    if (lastRow > 1) sheet.getRange(2, 1, lastRow - 1, QUEUE_HEADERS.length).clearContent();
+    return { ok: true, cleared: entries.length };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 /**

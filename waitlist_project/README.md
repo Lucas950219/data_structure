@@ -33,6 +33,7 @@ GitHub Pages 發布 `waitlist.html`、`staff.html`、`styles.css`、`app.js`、`
 
 - `報告.md` 是依老師 3.1–3.12 項目整理的草稿。請填入實際設備資料，並補上真實截圖與操作紀錄；不要寫入員工密碼。
 - 貼上並部署新版 `Code.gs` 後，在自己的 Apps Script `/exec` 網址後加入 `?action=log&key=員工密碼`，可查看加入、通知、入座與取消的事件。紀錄從試算表中已保存的時間戳記重建，不含顧客姓名或 E-mail；網址中的密碼不應出現在截圖或繳交檔案。
+- `action=reset` 已加入本機 `Code.gs`；貼上並更新 Apps Script 部署後才會生效。作業及評分結束且確定不再需要紀錄後，可以在相同網址加上 `?action=reset&key=員工密碼&confirm=RESET` 清空試算表中的候位資料與事件紀錄。此動作無法復原；僅提供密碼但沒有 `confirm=RESET` 時不會清除。完成後再封存 Apps Script 部署。
 - 將完整 JSON 輸出存為 `操作紀錄.json`，實際截圖放入 `證據/` 並完成報告後，可執行：
 
   ```powershell
